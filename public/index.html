@@ -10,6 +10,8 @@
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
   <!-- QRCode.js CDN for pairing link -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- PeerJS CDN for WebRTC P2P Sync -->
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
 <body>
   <!-- Dark/Light Theme Staging Quick Toggle -->
@@ -36,7 +38,7 @@
           </svg>
           <span>3D Motion Showcase</span>
         </div>
-        <p class="subtitle">Interactive 3D device mockup synced via WebSocket</p>
+        <p class="subtitle">Interactive 3D device mockup synced via WebRTC P2P</p>
       </div>
 
       <!-- Pairing Panel -->
@@ -69,10 +71,10 @@
       <div class="panel">
         <span class="panel-title">Status Monitor</span>
         <div class="status-bar">
-          <span>Server Link:</span>
+          <span>WebRTC Link:</span>
           <div class="status-indicator">
             <span class="status-dot disconnected" id="server-status-dot"></span>
-            <span id="server-status-text">Disconnected</span>
+            <span id="server-status-text">Connecting...</span>
           </div>
         </div>
         <div class="status-bar">
@@ -94,7 +96,7 @@
             <option value="clock">Fallback: Dynamic Home Screen</option>
             <option value="image">Custom Screenshot (.png/.jpg)</option>
             <option value="video">Custom Demo Video (.mp4)</option>
-            <option value="mirror">WebSocket Mirror (From Mobile Browser)</option>
+            <option value="mirror">WebRTC Mirror (From Mobile Browser)</option>
             <option value="window">Desktop Window Share (scrcpy / Simulator)</option>
           </select>
         </div>
@@ -222,7 +224,8 @@
       isSet: false
     };
 
-    let ws = null;
+    let peer = null;
+    let activeConn = null;
     let roomCode = '';
     let targetRotation = new THREE.Quaternion();
     let isPhoneStreaming = false;
@@ -390,95 +393,152 @@
     });
 
     // ----------------------------------------------------
-    // WebSocket Connection
+    // WebRTC Peer Connection (PeerJS)
     // ----------------------------------------------------
-    function initWebSocket() {
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}`;
+    function initPeerConnection() {
+      const peerId = 'appshowcase-' + roomCode;
 
       serverDot.className = 'status-dot connecting';
       serverText.innerText = 'Connecting...';
 
       try {
-        ws = new WebSocket(wsUrl);
+        if (peer && !peer.destroyed) {
+          peer.destroy();
+        }
 
-        ws.onopen = () => {
-          console.log('WebSocket connected to relay server.');
+        peer = new Peer(peerId, {
+          debug: 1
+        });
+
+        peer.on('open', (id) => {
+          console.log('PeerJS signaling ready with ID:', id);
           serverDot.className = 'status-dot connected';
-          serverText.innerText = 'Connected';
-          
-          // Join room as desktop
-          ws.send(JSON.stringify({
-            type: 'join',
-            role: 'desktop',
-            room: roomCode
-          }));
-        };
+          serverText.innerText = 'Ready (WebRTC)';
+        });
 
-        ws.onmessage = (event) => {
-          // If the message is a binary blob, handle it as a screen sharing frame
-          if (event.data instanceof Blob) {
-            if (currentScreenType === 'mirror') {
-              const url = URL.createObjectURL(event.data);
-              const img = new Image();
-              img.onload = () => {
-                if (canvasCtx) {
-                  canvasCtx.drawImage(img, 0, 0, canvasElement.width, canvasElement.height);
-                  screenTexture.needsUpdate = true;
-                }
-                URL.revokeObjectURL(url);
-              };
-              img.src = url;
+        peer.on('connection', (conn) => {
+          console.log('Incoming mobile connection from:', conn.peer);
+          activeConn = conn;
+          phoneDot.className = 'status-dot connected';
+          phoneText.innerText = 'Paired';
+          isPhoneStreaming = false;
+
+          conn.on('data', (data) => {
+            // Handle binary blob / ArrayBuffer for screen / camera mirror
+            if (data instanceof Blob || data instanceof ArrayBuffer || (data && data.byteLength)) {
+              if (currentScreenType === 'mirror') {
+                const blob = (data instanceof Blob) ? data : new Blob([data], { type: 'image/jpeg' });
+                const url = URL.createObjectURL(blob);
+                const img = new Image();
+                img.onload = () => {
+                  if (canvasCtx) {
+                    canvasCtx.drawImage(img, 0, 0, canvasElement.width, canvasElement.height);
+                    screenTexture.needsUpdate = true;
+                  }
+                  URL.revokeObjectURL(url);
+                };
+                img.src = url;
+              }
+              return;
             }
-            return;
+
+            // Parse JSON if received as string
+            let payload = data;
+            if (typeof data === 'string') {
+              try {
+                payload = JSON.parse(data);
+              } catch (e) {
+                return;
+              }
+            }
+
+            if (payload && payload.type === 'orientation') {
+              lastSensorActivity = Date.now();
+              if (!isPhoneStreaming) {
+                isPhoneStreaming = true;
+                phoneDot.className = 'status-dot streaming';
+                phoneText.innerText = 'Streaming';
+              }
+              processOrientationData(payload.alpha, payload.beta, payload.gamma);
+            } else if (payload && payload.type === 'status') {
+              if (payload.message && payload.message.includes('disconnected')) {
+                phoneDot.className = 'status-dot disconnected';
+                phoneText.innerText = 'Not Paired';
+                isPhoneStreaming = false;
+                resetDeviceRotation();
+              }
+            }
+          });
+
+          conn.on('close', () => {
+            console.log('Mobile peer connection closed.');
+            phoneDot.className = 'status-dot disconnected';
+            phoneText.innerText = 'Not Paired';
+            isPhoneStreaming = false;
+            resetDeviceRotation();
+          });
+
+          conn.on('error', (err) => {
+            console.error('DataChannel error:', err);
+          });
+        });
+
+        // Also handle incoming WebRTC direct media calls (for screen / camera video streams)
+        peer.on('call', (call) => {
+          console.log('Incoming WebRTC media call');
+          call.answer(); // Answer with no stream back
+          call.on('stream', (remoteStream) => {
+            console.log('Received remote media stream');
+            const remoteVideo = document.createElement('video');
+            remoteVideo.srcObject = remoteStream;
+            remoteVideo.autoplay = true;
+            remoteVideo.playsInline = true;
+            remoteVideo.muted = true;
+            remoteVideo.onloadedmetadata = () => {
+              remoteVideo.play();
+            };
+
+            const streamToCanvas = () => {
+              if (currentScreenType === 'mirror' && canvasCtx && remoteVideo.readyState >= 2) {
+                canvasCtx.drawImage(remoteVideo, 0, 0, canvasElement.width, canvasElement.height);
+                screenTexture.needsUpdate = true;
+              }
+              if (remoteStream.active) {
+                requestAnimationFrame(streamToCanvas);
+              }
+            };
+            requestAnimationFrame(streamToCanvas);
+          });
+        });
+
+        peer.on('error', (err) => {
+          console.error('PeerJS error:', err);
+          if (err.type === 'unavailable-id') {
+            console.warn('Room ID collision, generating a new room code...');
+            roomCode = Math.floor(1000 + Math.random() * 9000).toString();
+            document.getElementById('display-room-code').innerText = roomCode;
+            setupQRCode(window.location.host);
+            setTimeout(initPeerConnection, 500);
+          } else {
+            serverDot.className = 'status-dot disconnected';
+            serverText.innerText = 'Signaling Error';
+            setTimeout(initPeerConnection, 5000);
           }
+        });
 
-          const data = JSON.parse(event.data);
-          
-          if (data.type === 'status') {
-            console.log('Status message:', data.message);
-            if (data.message.includes('Controller connected')) {
-              phoneDot.className = 'status-dot connected';
-              phoneText.innerText = 'Paired';
-              isPhoneStreaming = false;
-            } else if (data.message.includes('Controller disconnected')) {
-              phoneDot.className = 'status-dot disconnected';
-              phoneText.innerText = 'Not Paired';
-              isPhoneStreaming = false;
-              resetDeviceRotation();
-            }
-          } 
-          else if (data.type === 'orientation') {
-            lastSensorActivity = Date.now();
-            
-            if (!isPhoneStreaming) {
-              isPhoneStreaming = true;
-              phoneDot.className = 'status-dot streaming';
-              phoneText.innerText = 'Streaming';
-            }
-            
-            processOrientationData(data.alpha, data.beta, data.gamma);
-          }
-        };
-
-        ws.onclose = () => {
-          console.log('WebSocket connection closed.');
+        peer.on('disconnected', () => {
+          console.log('Peer disconnected from signaling server, attempting reconnect...');
           serverDot.className = 'status-dot disconnected';
           serverText.innerText = 'Disconnected';
-          phoneDot.className = 'status-dot disconnected';
-          phoneText.innerText = 'Not Paired';
-          isPhoneStreaming = false;
-          
-          // Retry connection after 5 seconds
-          setTimeout(initWebSocket, 5000);
-        };
-
-        ws.onerror = (err) => {
-          console.error('WebSocket connection error:', err);
-        };
+          if (!peer.destroyed) {
+            peer.reconnect();
+          }
+        });
 
       } catch (e) {
-        console.error('WebSocket initialization failed:', e);
+        console.error('PeerJS initialization failed:', e);
+        serverDot.className = 'status-dot disconnected';
+        serverText.innerText = 'Failed';
       }
     }
 
@@ -1295,7 +1355,7 @@
     // ----------------------------------------------------
     window.addEventListener('load', () => {
       init3D();
-      initWebSocket();
+      initPeerConnection();
     });
   </script>
 </body>

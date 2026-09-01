@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>App Showcase Controller</title>
   <link rel="stylesheet" href="style.css">
+  <!-- PeerJS CDN for WebRTC P2P Sync -->
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
 <body>
   <div class="mobile-container">
@@ -16,7 +18,7 @@
         </svg>
         <span>Mockup Controller</span>
       </div>
-      <p class="subtitle">Stream motion in real-time</p>
+      <p class="subtitle">Stream motion via WebRTC P2P</p>
     </div>
 
     <!-- Main Controller Card -->
@@ -103,24 +105,13 @@
     const trackBtnText = document.getElementById('track-btn-text');
     const deviceInfo = document.getElementById('device-info');
 
-    let ws = null;
+    let peer = null;
+    let activeConn = null;
+    let activeCall = null;
     let room = '';
     let isTracking = false;
     let orientationData = { alpha: 0, beta: 0, gamma: 0 };
     let lastSentTime = 0;
-
-    // Check for query parameter room ID
-    const urlParams = new URLSearchParams(window.location.search);
-    const roomParam = urlParams.get('room');
-    if (roomParam) {
-      roomInput.value = roomParam.substring(0, 4);
-      // Auto-connect if room parameter is present
-      setTimeout(() => connectWebSocket(), 500);
-    }
-
-    connectBtn.addEventListener('click', () => {
-      connectWebSocket();
-    });
 
     function updateStatus(state, message) {
       statusDot.className = 'status-dot';
@@ -128,51 +119,80 @@
       statusText.innerText = message || state.charAt(0).toUpperCase() + state.slice(1);
     }
 
-    function connectWebSocket() {
+    function initPeer() {
+      if (peer && !peer.destroyed) return;
+
+      peer = new Peer({
+        debug: 1
+      });
+
+      peer.on('open', (id) => {
+        console.log('Mobile PeerJS initialized with ID:', id);
+        if (room && (!activeConn || !activeConn.open)) {
+          connectToDesktop();
+        }
+      });
+
+      peer.on('error', (err) => {
+        console.error('Peer error:', err);
+        updateStatus('disconnected', 'Signal Error');
+        connectBtn.disabled = false;
+        roomInput.disabled = false;
+      });
+    }
+
+    // Check for query parameter room ID
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomParam = urlParams.get('room');
+    if (roomParam) {
+      roomInput.value = roomParam.substring(0, 4);
+      room = roomParam.substring(0, 4).toUpperCase();
+    }
+
+    // Initialize peer signaling client on load
+    initPeer();
+
+    connectBtn.addEventListener('click', () => {
+      connectToDesktop();
+    });
+
+    function connectToDesktop() {
       room = roomInput.value.trim().toUpperCase();
       if (!room || room.length !== 4) {
         alert('Please enter a valid 4-digit pairing code.');
         return;
       }
 
+      if (!peer || peer.destroyed || !peer.id) {
+        initPeer();
+        updateStatus('connecting', 'Connecting signal...');
+        return;
+      }
+
+      const targetPeerId = 'appshowcase-' + room;
       updateStatus('connecting', 'Connecting...');
       connectBtn.disabled = true;
       roomInput.disabled = true;
 
-      // Determine WS protocol based on page protocol
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}`;
-
       try {
-        ws = new WebSocket(wsUrl);
+        if (activeConn) {
+          activeConn.close();
+        }
 
-        ws.onopen = () => {
-          console.log('WebSocket connected');
-          // Join the room as a phone controller
-          ws.send(JSON.stringify({
-            type: 'join',
-            role: 'phone',
-            room: room
-          }));
-          
+        activeConn = peer.connect(targetPeerId, {
+          reliable: false // Ultra-low latency for sensor streaming
+        });
+
+        activeConn.on('open', () => {
+          console.log('Connected to desktop peer:', targetPeerId);
           updateStatus('connected', 'Connected');
           pairingSection.style.display = 'none';
           trackingSection.style.display = 'block';
-          deviceInfo.innerText = 'Connected. Ready to track.';
-        };
+          deviceInfo.innerText = 'Connected via WebRTC. Ready to track.';
+        });
 
-        ws.onmessage = (event) => {
-          const data = JSON.parse(event.data);
-          if (data.type === 'status') {
-            deviceInfo.innerText = data.message;
-            if (data.message.includes('Viewer connected') && isTracking) {
-              updateStatus('streaming', 'Streaming');
-            }
-          }
-        };
-
-        ws.onclose = () => {
-          console.log('WebSocket closed');
+        activeConn.on('close', () => {
+          console.log('Peer connection closed');
           updateStatus('disconnected', 'Disconnected');
           pairingSection.style.display = 'block';
           trackingSection.style.display = 'none';
@@ -182,17 +202,17 @@
           stopTracking();
           stopScreenShare();
           stopCameraShare();
-        };
+        });
 
-        ws.onerror = (err) => {
-          console.error('WebSocket error:', err);
+        activeConn.on('error', (err) => {
+          console.error('DataConnection error:', err);
           updateStatus('disconnected', 'Connection Error');
           connectBtn.disabled = false;
           roomInput.disabled = false;
-        };
+        });
 
       } catch (e) {
-        console.error(e);
+        console.error('Failed to connect:', e);
         updateStatus('disconnected', 'Failed to connect');
         connectBtn.disabled = false;
         roomInput.disabled = false;
@@ -246,7 +266,7 @@
       isTracking = false;
       trackBtn.classList.remove('active');
       trackBtnText.innerText = 'Enable Motion';
-      if (ws && ws.readyState === WebSocket.OPEN) {
+      if (activeConn && activeConn.open) {
         updateStatus('connected', 'Connected');
         deviceInfo.innerText = 'Tracking paused.';
       } else {
@@ -278,14 +298,14 @@
 
     // Stream loop using requestAnimationFrame for smooth 60fps limit
     function streamLoop(timestamp) {
-      if (isTracking && ws && ws.readyState === WebSocket.OPEN) {
+      if (isTracking && activeConn && activeConn.open) {
         if (timestamp - lastSentTime > 16.67) { // 16.67ms is roughly 60 FPS
-          ws.send(JSON.stringify({
+          activeConn.send({
             type: 'orientation',
             alpha: orientationData.alpha,
             beta: orientationData.beta,
             gamma: orientationData.gamma
-          }));
+          });
           lastSentTime = timestamp;
         }
       }
@@ -294,13 +314,6 @@
     
     // Start animation loop
     requestAnimationFrame(streamLoop);
-
-    // Keepalive ping to prevent WebSocket connection timeout (especially on mobile browsers in background)
-    setInterval(() => {
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: 'ping' }));
-      }
-    }, 15000);
 
     // Screen Mirroring Setup
     const shareBtn = document.getElementById('share-btn');
@@ -335,6 +348,16 @@
           startStreamingScreen();
         };
 
+        // Try direct WebRTC MediaStream call if peer is ready
+        if (peer && room) {
+          try {
+            if (activeCall) activeCall.close();
+            activeCall = peer.call('appshowcase-' + room, screenStream);
+          } catch(e) {
+            console.log('Direct call fallback to canvas streaming:', e);
+          }
+        }
+
         shareBtn.classList.add('active');
         shareBtnText.innerText = 'Sharing Screen';
         shareBtn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
@@ -358,11 +381,11 @@
       const ctx = streamCanvas.getContext('2d');
 
       screenInterval = setInterval(() => {
-        if (ws && ws.readyState === WebSocket.OPEN && screenStream && screenVideo.readyState >= 2) {
+        if (activeConn && activeConn.open && screenStream && screenVideo.readyState >= 2) {
           ctx.drawImage(screenVideo, 0, 0, streamCanvas.width, streamCanvas.height);
           streamCanvas.toBlob((blob) => {
-            if (blob && ws.readyState === WebSocket.OPEN) {
-              ws.send(blob);
+            if (blob && activeConn && activeConn.open) {
+              activeConn.send(blob);
             }
           }, 'image/jpeg', 0.55); // 55% JPEG compression is highly optimized
         }
@@ -370,6 +393,10 @@
     }
 
     function stopScreenShare() {
+      if (activeCall) {
+        try { activeCall.close(); } catch(e) {}
+        activeCall = null;
+      }
       if (screenInterval) {
         clearInterval(screenInterval);
         screenInterval = null;
@@ -425,6 +452,16 @@
           startStreamingCamera();
         };
 
+        // Try direct WebRTC MediaStream call if peer is ready
+        if (peer && room) {
+          try {
+            if (activeCall) activeCall.close();
+            activeCall = peer.call('appshowcase-' + room, cameraStream);
+          } catch(e) {
+            console.log('Direct call fallback to canvas streaming:', e);
+          }
+        }
+
         cameraBtn.classList.add('active');
         cameraBtnText.innerText = 'Sharing Camera';
         cameraBtn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
@@ -443,11 +480,11 @@
       const ctx = streamCanvas.getContext('2d');
 
       cameraInterval = setInterval(() => {
-        if (ws && ws.readyState === WebSocket.OPEN && cameraStream && cameraVideo.readyState >= 2) {
+        if (activeConn && activeConn.open && cameraStream && cameraVideo.readyState >= 2) {
           ctx.drawImage(cameraVideo, 0, 0, streamCanvas.width, streamCanvas.height);
           streamCanvas.toBlob((blob) => {
-            if (blob && ws.readyState === WebSocket.OPEN) {
-              ws.send(blob);
+            if (blob && activeConn && activeConn.open) {
+              activeConn.send(blob);
             }
           }, 'image/jpeg', 0.55); // Stream at 55% quality
         }
@@ -455,6 +492,10 @@
     }
 
     function stopCameraShare() {
+      if (activeCall) {
+        try { activeCall.close(); } catch(e) {}
+        activeCall = null;
+      }
       if (cameraInterval) {
         clearInterval(cameraInterval);
         cameraInterval = null;

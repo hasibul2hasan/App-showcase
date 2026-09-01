@@ -1,0 +1,8 @@
+[build]
+  publish = "public"
+
+[[redirects]]
+  from = "/phone"
+  to = "/phone.html"
+  status = 200
+

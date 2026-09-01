@@ -1,35 +1,30 @@
 # Motion-Synced 3D Mobile Mockup Web Application
 
-A real-time, motion-synced 3D smartphone mockup web application. This project uses a physical mobile device's gyroscope (`DeviceOrientation` API) to rotate a high-fidelity 3D phone rendered in a desktop browser in real-time. Communication between the mobile controller and the desktop viewport is managed via WebSockets with room-based pairing.
-
+A real-time, motion-synced 3D smartphone mockup web application. This project uses a physical mobile device's gyroscope (`DeviceOrientation` API) to rotate a high-fidelity 3D phone rendered in a desktop browser in real-time. Communication between the mobile controller and the desktop viewport is managed via **WebRTC Peer-to-Peer (PeerJS)** with room-based pairing.
 ---
 
-## Architecture Overview
+## ⚡ 100% Serverless & Netlify Ready
 
-1. **Relay Server (`server.js`):** Node.js Express server that hosts static assets and exposes a WebSocket server (`ws`). It maintains rooms for paired sessions to support multiple concurrent users.
-2. **Mobile Controller (`public/phone.html`):** A lightweight client running on a phone. It requests motion sensor permissions (for iOS 13+) and streams orientation angles (`alpha`, `beta`, `gamma`) at 60 FPS.
+1. **Signaling & P2P Broker (PeerJS):** Cloud signaling connects desktop and phone clients via WebRTC data channels. Once paired, all sensor telemetry flows directly peer-to-peer between devices with ultra-low latency.
+2. **Mobile Controller (`public/phone.html`):** A lightweight client running on a phone. It requests motion sensor permissions (for iOS 13+) and streams orientation angles (`alpha`, `beta`, `gamma`) at 60 FPS over WebRTC.
 3. **Desktop Viewer (`public/index.html`):** The primary view rendering a procedural 3D smartphone model with studio lighting. It interpolates (`slerp`) rotation values to remove sensor jitter.
 
----
+## Deploying to Netlify
 
-## Getting Started
-
-### 1. Prerequisites
-Ensure you have [Node.js](https://nodejs.org/) installed (v16.0.0 or higher recommended).
-
-### 2. Installation
+1. Push this repository to GitHub.
+2. In Netlify, import the repository.
+4. Click **Deploy Site**.
 Navigate to the project root and install the dependencies:
 ```bash
 npm install
 ```
 
 ### 3. Run Locally
-Start the server in development mode (with hot-reloading via `nodemon`):
+Start the local static server:
 ```bash
 npm run dev
 ```
 Or start the server directly:
-```bash
 npm start
 ```
 The server will bind to port `3000` on all network interfaces (`0.0.0.0`), printing:
