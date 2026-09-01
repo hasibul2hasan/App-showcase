@@ -48,6 +48,20 @@
           <p class="subtitle">Scan QR code with your mobile device to pair:</p>
           <div id="qrcode"></div>
           <p class="subtitle" style="font-size: 0.75rem; word-break: break-all;" id="pairing-link"></p>
+          
+          <div style="margin-top: 10px; border-top: 1px dashed var(--panel-border); padding-top: 10px; width: 100%;">
+            <p class="subtitle" style="font-size: 0.75rem; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 4px; color: var(--accent-color);">
+              <svg style="width: 14px; height: 14px; stroke: var(--accent-color);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H6.75A2.25 2.25 0 004.5 6.75v10.5a2.25 2.25 0 002.25 2.25z"></path>
+              </svg>
+              Wired USB Debugging (ADB)?
+            </p>
+            <p class="subtitle" style="font-size: 0.7rem; margin-top: 4px; text-align: left; line-height: 1.3;">
+              1. Connect phone with USB Debugging enabled.<br>
+              2. Run: <code style="background: rgba(255,255,255,0.05); padding: 1px 4px; border-radius: 4px; font-family: monospace; font-size: 0.65rem;">adb reverse tcp:3000 tcp:3000</code><br>
+              3. Open: <a href="#" id="adb-link" target="_blank" style="color: var(--text-primary); text-decoration: underline; font-family: monospace; font-size: 0.65rem;">localhost:3000/phone...</a>
+            </p>
+          </div>
         </div>
       </div>
 
@@ -80,7 +94,8 @@
             <option value="clock">Fallback: Dynamic Home Screen</option>
             <option value="image">Custom Screenshot (.png/.jpg)</option>
             <option value="video">Custom Demo Video (.mp4)</option>
-            <option value="mirror">Live Mobile Screen Mirror</option>
+            <option value="mirror">WebSocket Mirror (From Mobile Browser)</option>
+            <option value="window">Desktop Window Share (scrcpy / Simulator)</option>
           </select>
         </div>
 
@@ -217,6 +232,14 @@
     roomCode = Math.floor(1000 + Math.random() * 9000).toString();
     document.getElementById('display-room-code').innerText = roomCode;
 
+    // Update ADB/USB debug link helper
+    const adbLink = document.getElementById('adb-link');
+    if (adbLink) {
+      const adbUrl = `http://localhost:3000/phone.html?room=${roomCode}`;
+      adbLink.href = adbUrl;
+      adbLink.innerText = `localhost:3000/phone.html?room=${roomCode}`;
+    }
+
     // ----------------------------------------------------
     // QR Code & Links Setup
     // ----------------------------------------------------
@@ -327,6 +350,7 @@
     screenSourceSelect.addEventListener('change', (e) => {
       imageUploadGroup.style.display = 'none';
       videoUploadGroup.style.display = 'none';
+      stopLocalWindowShare(); // Always stop window sharing if we change source
 
       if (e.target.value === 'image') {
         imageUploadGroup.style.display = 'flex';
@@ -336,6 +360,8 @@
         applyVideoTexture();
       } else if (e.target.value === 'mirror') {
         applyMirrorTexture();
+      } else if (e.target.value === 'window') {
+        applyWindowShareTexture();
       } else {
         applyClockTexture();
       }
@@ -530,6 +556,7 @@
     let screenTexture;
     let canvasElement, canvasCtx; // Fallback Clock canvas
     let activeVideoElement = null; // Video element
+    let activeLocalStream = null;  // Local screen share stream
     
     const container = document.getElementById('canvas-container');
 
@@ -1026,6 +1053,57 @@
       screenTexture.needsUpdate = true;
     }
 
+    async function applyWindowShareTexture() {
+      currentScreenType = 'window';
+      cleanupVideo();
+
+      try {
+        const stream = await navigator.mediaDevices.getDisplayMedia({
+          video: {
+            displaySurface: "window"
+          },
+          audio: false
+        });
+
+        activeVideoElement = document.createElement('video');
+        activeVideoElement.autoplay = true;
+        activeVideoElement.playsInline = true;
+        activeVideoElement.muted = true;
+
+        activeVideoElement.onloadedmetadata = () => {
+          activeVideoElement.play();
+          screenTexture = new THREE.VideoTexture(activeVideoElement);
+          screenTexture.minFilter = THREE.LinearFilter;
+          screenTexture.magFilter = THREE.LinearFilter;
+          screenMesh.material.map = screenTexture;
+          screenMesh.material.needsUpdate = true;
+        };
+
+        activeVideoElement.srcObject = stream;
+
+        activeLocalStream = stream;
+
+        // If user stops sharing from browser UI bar
+        stream.getVideoTracks()[0].onended = () => {
+          stopLocalWindowShare();
+          applyClockTexture();
+          screenSourceSelect.value = 'clock';
+        };
+      } catch (err) {
+        console.error("Local window share failed:", err);
+        screenSourceSelect.value = 'clock';
+        applyClockTexture();
+      }
+    }
+
+    function stopLocalWindowShare() {
+      if (activeLocalStream) {
+        activeLocalStream.getTracks().forEach(track => track.stop());
+        activeLocalStream = null;
+      }
+      cleanupVideo();
+    }
+
     // 2. Custom image screen source loading
     function applyImageTexture(file) {
       currentScreenType = 'image';
@@ -1132,6 +1210,7 @@
       if (activeVideoElement) {
         activeVideoElement.pause();
         activeVideoElement.src = "";
+        activeVideoElement.srcObject = null;
         activeVideoElement.load();
         activeVideoElement = null;
       }

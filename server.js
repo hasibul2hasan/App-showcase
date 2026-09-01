@@ -177,7 +177,7 @@ wss.on('connection', (ws) => {
 });
 
 // Start the server
-server.listen(port, '0.0.0.0', () => {
+server.listen(port, () => {
   const networkInterfaces = os.networkInterfaces();
   let localIp = 'localhost';
   for (const name of Object.keys(networkInterfaces)) {
