@@ -48,6 +48,14 @@
           <span id="track-btn-text">Enable Motion</span>
         </button>
 
+        <!-- Recalibrate Center Button -->
+        <button id="phone-calibrate-btn" class="btn btn-secondary" style="display: none; width: 100%; max-width: 250px; padding: 10px; font-size: 0.85rem; border-radius: 12px; gap: 8px; justify-content: center; align-items: center;">
+          <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"></path>
+          </svg>
+          <span>Recalibrate Center</span>
+        </button>
+
         <!-- Media Sharing Buttons (Bottom Row) -->
         <div style="display: flex; gap: 12px; justify-content: center; align-items: center; width: 100%;">
           <button id="share-btn" class="motion-btn" style="margin: 0; width: 120px; height: 120px; font-size: 0.75rem; background: linear-gradient(135deg, #a855f7 0%, #7e22ce 100%); box-shadow: 0 0 15px rgba(168, 85, 247, 0.35);">
@@ -103,6 +111,7 @@
     const trackingSection = document.getElementById('tracking-section');
     const trackBtn = document.getElementById('track-btn');
     const trackBtnText = document.getElementById('track-btn-text');
+    const phoneCalibrateBtn = document.getElementById('phone-calibrate-btn');
     const deviceInfo = document.getElementById('device-info');
 
     let peer = null;
@@ -337,6 +346,7 @@
       isTracking = true;
       trackBtn.classList.add('active');
       trackBtnText.innerText = 'Tracking active';
+      if (phoneCalibrateBtn) phoneCalibrateBtn.style.display = 'inline-flex';
       updateStatus('streaming', 'Streaming');
       deviceInfo.innerText = 'Streaming device orientation...';
     }
@@ -346,6 +356,7 @@
       isTracking = false;
       trackBtn.classList.remove('active');
       trackBtnText.innerText = 'Enable Motion';
+      if (phoneCalibrateBtn) phoneCalibrateBtn.style.display = 'none';
       if (activeConn && activeConn.open) {
         updateStatus('connected', 'Connected');
         deviceInfo.innerText = 'Tracking paused.';
@@ -358,6 +369,18 @@
       document.getElementById('val-alpha').innerText = '0°';
       document.getElementById('val-beta').innerText = '0°';
       document.getElementById('val-gamma').innerText = '0°';
+    }
+
+    if (phoneCalibrateBtn) {
+      phoneCalibrateBtn.addEventListener('click', () => {
+        if (activeConn && activeConn.open) {
+          activeConn.send({ type: 'recalibrate' });
+          deviceInfo.innerText = 'Center position recalibrated!';
+          setTimeout(() => {
+            if (isTracking) deviceInfo.innerText = 'Streaming device orientation...';
+          }, 1500);
+        }
+      });
     }
 
     function handleOrientation(event) {
