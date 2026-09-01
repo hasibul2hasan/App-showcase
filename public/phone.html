@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>App Showcase Controller</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="/style.css">
   <!-- PeerJS CDN for WebRTC P2P Sync -->
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
@@ -120,6 +120,12 @@
     }
 
     function initPeer() {
+      if (typeof Peer === 'undefined') {
+        console.warn('PeerJS library loading, retrying in 300ms...');
+        setTimeout(initPeer, 300);
+        return;
+      }
+
       if (peer && !peer.destroyed) return;
 
       peer = new Peer({
@@ -141,12 +147,35 @@
       });
     }
 
-    // Check for query parameter room ID
-    const urlParams = new URLSearchParams(window.location.search);
-    const roomParam = urlParams.get('room');
-    if (roomParam) {
-      roomInput.value = roomParam.substring(0, 4);
-      room = roomParam.substring(0, 4).toUpperCase();
+    // Extract room ID from URL (supports /pair/1234, /remote/1234, ?room=1234, or #1234)
+    let extractedRoom = null;
+
+    // 1. Check Path parameter: e.g. /pair/7710, /remote/7710, /phone/7710
+    const pathSegments = window.location.pathname.split('/').filter(Boolean);
+    if (pathSegments.length >= 2) {
+      const lastSegment = pathSegments[pathSegments.length - 1];
+      if (/^[A-Za-z0-9]{4}$/.test(lastSegment)) {
+        extractedRoom = lastSegment;
+      }
+    }
+
+    // 2. Check Query parameter: ?room=7710, ?code=7710, ?r=7710
+    if (!extractedRoom) {
+      const urlParams = new URLSearchParams(window.location.search);
+      extractedRoom = urlParams.get('room') || urlParams.get('code') || urlParams.get('r');
+    }
+
+    // 3. Check Hash: #7710
+    if (!extractedRoom && window.location.hash) {
+      const hash = window.location.hash.replace('#', '').trim();
+      if (/^[A-Za-z0-9]{4}$/.test(hash)) {
+        extractedRoom = hash;
+      }
+    }
+
+    if (extractedRoom) {
+      roomInput.value = extractedRoom.substring(0, 4);
+      room = extractedRoom.substring(0, 4).toUpperCase();
     }
 
     // Initialize peer signaling client on load
@@ -155,6 +184,14 @@
     connectBtn.addEventListener('click', () => {
       connectToDesktop();
     });
+
+    function getDeviceName() {
+      const ua = navigator.userAgent;
+      if (/iPhone/i.test(ua)) return 'Apple iPhone';
+      if (/iPad/i.test(ua)) return 'Apple iPad';
+      if (/Android/i.test(ua)) return 'Android Device';
+      return 'Mobile Controller';
+    }
 
     function connectToDesktop() {
       room = roomInput.value.trim().toUpperCase();
@@ -184,11 +221,54 @@
         });
 
         activeConn.on('open', () => {
-          console.log('Connected to desktop peer:', targetPeerId);
-          updateStatus('connected', 'Connected');
+          console.log('Connected to desktop peer, awaiting approval:', targetPeerId);
+          updateStatus('connecting', 'Waiting for Host...');
           pairingSection.style.display = 'none';
-          trackingSection.style.display = 'block';
-          deviceInfo.innerText = 'Connected via WebRTC. Ready to track.';
+          trackingSection.style.display = 'none';
+          deviceInfo.innerText = 'Pairing request sent. Waiting for host to approve...';
+
+          // Send pair request with device name
+          activeConn.send({
+            type: 'pair_request',
+            device: getDeviceName()
+          });
+        });
+
+        activeConn.on('data', (data) => {
+          let payload = data;
+          if (typeof data === 'string') {
+            try { payload = JSON.parse(data); } catch(e) {}
+          }
+
+          if (payload && payload.type === 'pair_accepted') {
+            console.log('Host accepted pairing request!');
+            updateStatus('connected', 'Connected');
+            pairingSection.style.display = 'none';
+            trackingSection.style.display = 'block';
+            deviceInfo.innerText = 'Connected via WebRTC. Ready to stream.';
+          } else if (payload && payload.type === 'pair_rejected') {
+            console.log('Host rejected pairing request.');
+            updateStatus('disconnected', 'Declined by Host');
+            pairingSection.style.display = 'block';
+            trackingSection.style.display = 'none';
+            connectBtn.disabled = false;
+            roomInput.disabled = false;
+            deviceInfo.innerText = 'Connection request was declined by host.';
+            stopTracking();
+            stopScreenShare();
+            stopCameraShare();
+          } else if (payload && payload.type === 'disconnect') {
+            console.log('Host disconnected session.');
+            updateStatus('disconnected', 'Disconnected');
+            pairingSection.style.display = 'block';
+            trackingSection.style.display = 'none';
+            connectBtn.disabled = false;
+            roomInput.disabled = false;
+            deviceInfo.innerText = 'Session disconnected by host.';
+            stopTracking();
+            stopScreenShare();
+            stopCameraShare();
+          }
         });
 
         activeConn.on('close', () => {

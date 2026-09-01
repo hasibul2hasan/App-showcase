@@ -9,8 +9,8 @@ const port = process.env.PORT || 3000;
 // Serve static files from the 'public' directory
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Fallback routing for /phone to phone.html
-app.get('/phone', (req, res) => {
+// Clean URL routing for mobile controller
+app.get(['/phone', '/phone/*', '/phone/:room', '/pair', '/pair/*', '/pair/:room', '/remote', '/remote/*', '/remote/:room', '/join', '/join/*', '/join/:room'], (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'phone.html'));
 });
 

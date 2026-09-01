@@ -2,6 +2,41 @@
   publish = "public"
 
 [[redirects]]
+  from = "/pair/*"
+  to = "/phone.html"
+  status = 200
+
+[[redirects]]
+  from = "/pair"
+  to = "/phone.html"
+  status = 200
+
+[[redirects]]
+  from = "/remote/*"
+  to = "/phone.html"
+  status = 200
+
+[[redirects]]
+  from = "/remote"
+  to = "/phone.html"
+  status = 200
+
+[[redirects]]
+  from = "/join/*"
+  to = "/phone.html"
+  status = 200
+
+[[redirects]]
+  from = "/join"
+  to = "/phone.html"
+  status = 200
+
+[[redirects]]
+  from = "/phone/*"
+  to = "/phone.html"
+  status = 200
+
+[[redirects]]
   from = "/phone"
   to = "/phone.html"
   status = 200
