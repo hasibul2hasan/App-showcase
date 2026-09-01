@@ -550,9 +550,9 @@
                 const url = URL.createObjectURL(blob);
                 const img = new Image();
                 img.onload = () => {
-                  if (canvasCtx) {
+                  if (canvasCtx && clockCanvasTexture) {
                     canvasCtx.drawImage(img, 0, 0, canvasElement.width, canvasElement.height);
-                    screenTexture.needsUpdate = true;
+                    clockCanvasTexture.needsUpdate = true;
                   }
                   URL.revokeObjectURL(url);
                 };
@@ -622,9 +622,9 @@
             };
 
             const streamToCanvas = () => {
-              if (currentScreenType === 'mirror' && canvasCtx && remoteVideo.readyState >= 2) {
+              if (currentScreenType === 'mirror' && canvasCtx && remoteVideo.readyState >= 2 && clockCanvasTexture) {
                 canvasCtx.drawImage(remoteVideo, 0, 0, canvasElement.width, canvasElement.height);
-                screenTexture.needsUpdate = true;
+                clockCanvasTexture.needsUpdate = true;
               }
               if (remoteStream.active) {
                 requestAnimationFrame(streamToCanvas);
@@ -749,10 +749,11 @@
     
     // Textures & Screen sources
     let currentScreenType = 'clock';
-    let screenTexture;
-    let canvasElement, canvasCtx; // Fallback Clock canvas
+    let clockCanvasTexture = null;
+    let canvasElement, canvasCtx; // Fallback Clock / Mirror canvas
     let activeVideoElement = null; // Video element
     let activeLocalStream = null;  // Local screen share stream
+    let demoVideoLoopId = null;
     
     const container = document.getElementById('canvas-container');
 
@@ -1117,13 +1118,15 @@
       canvasElement.height = 1024;
       canvasCtx = canvasElement.getContext('2d');
       
-      screenTexture = new THREE.CanvasTexture(canvasElement);
-      screenMesh.material.map = screenTexture;
-      screenMesh.material.needsUpdate = true;
+      clockCanvasTexture = new THREE.CanvasTexture(canvasElement);
+      if (screenMesh) {
+        screenMesh.material.map = clockCanvasTexture;
+        screenMesh.material.needsUpdate = true;
+      }
     }
 
     function renderClockCanvas() {
-      if (currentScreenType !== 'clock' || !canvasCtx) return;
+      if (currentScreenType !== 'clock' || !canvasCtx || !clockCanvasTexture) return;
 
       const w = canvasElement.width;
       const h = canvasElement.height;
@@ -1212,34 +1215,43 @@
       canvasCtx.fill();
 
       // Trigger WebGL update
-      screenTexture.needsUpdate = true;
+      clockCanvasTexture.needsUpdate = true;
     }
 
     function applyClockTexture() {
       currentScreenType = 'clock';
       cleanupVideo();
       // Re-bind the clock canvas texture
-      screenMesh.material.map = screenTexture;
-      screenMesh.material.needsUpdate = true;
+      if (screenMesh && clockCanvasTexture) {
+        screenMesh.material.map = clockCanvasTexture;
+        screenMesh.material.needsUpdate = true;
+        renderClockCanvas();
+      }
     }
 
     function applyMirrorTexture() {
       currentScreenType = 'mirror';
       cleanupVideo();
       // Re-bind the clock canvas texture which will display the mirrored frames
-      screenMesh.material.map = screenTexture;
-      screenMesh.material.needsUpdate = true;
+      if (screenMesh && clockCanvasTexture) {
+        screenMesh.material.map = clockCanvasTexture;
+        screenMesh.material.needsUpdate = true;
+      }
       
-      const w = canvasElement.width;
-      const h = canvasElement.height;
-      canvasCtx.fillStyle = '#0b0f19';
-      canvasCtx.fillRect(0, 0, w, h);
-      
-      canvasCtx.fillStyle = '#ffffff';
-      canvasCtx.font = 'bold 20px Inter, sans-serif';
-      canvasCtx.textAlign = 'center';
-      canvasCtx.fillText('Waiting for screen share...', w/2, h/2);
-      screenTexture.needsUpdate = true;
+      if (canvasElement && canvasCtx) {
+        const w = canvasElement.width;
+        const h = canvasElement.height;
+        canvasCtx.fillStyle = '#0b0f19';
+        canvasCtx.fillRect(0, 0, w, h);
+        
+        canvasCtx.fillStyle = '#ffffff';
+        canvasCtx.font = 'bold 20px Inter, sans-serif';
+        canvasCtx.textAlign = 'center';
+        canvasCtx.fillText('Waiting for screen share...', w/2, h/2);
+      }
+      if (clockCanvasTexture) {
+        clockCanvasTexture.needsUpdate = true;
+      }
     }
 
     async function applyWindowShareTexture() {
@@ -1260,12 +1272,14 @@
         activeVideoElement.muted = true;
 
         activeVideoElement.onloadedmetadata = () => {
-          activeVideoElement.play();
-          screenTexture = new THREE.VideoTexture(activeVideoElement);
-          screenTexture.minFilter = THREE.LinearFilter;
-          screenTexture.magFilter = THREE.LinearFilter;
-          screenMesh.material.map = screenTexture;
-          screenMesh.material.needsUpdate = true;
+          activeVideoElement.play().catch(console.error);
+          const winTex = new THREE.VideoTexture(activeVideoElement);
+          winTex.minFilter = THREE.LinearFilter;
+          winTex.magFilter = THREE.LinearFilter;
+          if (screenMesh) {
+            screenMesh.material.map = winTex;
+            screenMesh.material.needsUpdate = true;
+          }
         };
 
         activeVideoElement.srcObject = stream;
@@ -1306,17 +1320,15 @@
             tex.generateMipmaps = true;
             tex.minFilter = THREE.LinearMipmapLinearFilter;
             
-            // Adjust mapping
-            screenTexture = tex;
-            screenMesh.material.map = screenTexture;
-            screenMesh.material.needsUpdate = true;
+            if (screenMesh) {
+              screenMesh.material.map = tex;
+              screenMesh.material.needsUpdate = true;
+            }
           });
         };
         reader.readAsDataURL(file);
       } else {
         // Default Demo Image Screen
-        const loader = new THREE.TextureLoader();
-        // Fallback mockup gradient image if no upload
         const canvas = document.createElement('canvas');
         canvas.width = 512;
         canvas.height = 1024;
@@ -1332,9 +1344,11 @@
         ctx.textAlign = 'center';
         ctx.fillText('App Mockup Staging', 256, 512);
         
-        screenTexture = new THREE.CanvasTexture(canvas);
-        screenMesh.material.map = screenTexture;
-        screenMesh.material.needsUpdate = true;
+        const demoImgTex = new THREE.CanvasTexture(canvas);
+        if (screenMesh) {
+          screenMesh.material.map = demoImgTex;
+          screenMesh.material.needsUpdate = true;
+        }
       }
     }
 
@@ -1343,14 +1357,26 @@
       currentScreenType = 'video';
       cleanupVideo();
 
-      activeVideoElement = document.createElement('video');
-      activeVideoElement.autoplay = true;
-      activeVideoElement.loop = true;
-      activeVideoElement.muted = true;
-      activeVideoElement.playsInline = true;
-
       if (file) {
+        activeVideoElement = document.createElement('video');
+        activeVideoElement.autoplay = true;
+        activeVideoElement.loop = true;
+        activeVideoElement.muted = true;
+        activeVideoElement.playsInline = true;
         activeVideoElement.src = URL.createObjectURL(file);
+
+        activeVideoElement.oncanplay = () => {
+          activeVideoElement.play().catch(console.error);
+          const videoTex = new THREE.VideoTexture(activeVideoElement);
+          videoTex.minFilter = THREE.LinearFilter;
+          videoTex.magFilter = THREE.LinearFilter;
+          videoTex.format = THREE.RGBAFormat;
+
+          if (screenMesh) {
+            screenMesh.material.map = videoTex;
+            screenMesh.material.needsUpdate = true;
+          }
+        };
       } else {
         // Fallback default demo color noise
         const canvas = document.createElement('canvas');
@@ -1359,11 +1385,14 @@
         const ctx = canvas.getContext('2d');
         let currentHue = 0;
         
-        // Loop dynamic color background
-        activeVideoElement = null; // Use manual canvas rendering loop instead of HTML video element
+        const demoVideoTex = new THREE.CanvasTexture(canvas);
+        if (screenMesh) {
+          screenMesh.material.map = demoVideoTex;
+          screenMesh.material.needsUpdate = true;
+        }
         
         const renderNoise = () => {
-          if (currentScreenType !== 'video' || activeVideoElement !== null) return;
+          if (currentScreenType !== 'video') return;
           currentHue = (currentHue + 1) % 360;
           ctx.fillStyle = `hsl(${currentHue}, 80%, 40%)`;
           ctx.fillRect(0, 0, 128, 256);
@@ -1371,31 +1400,19 @@
           ctx.font = 'bold 12px Inter, sans-serif';
           ctx.textAlign = 'center';
           ctx.fillText('Interactive Video Loop', 64, 128);
-          screenTexture.needsUpdate = true;
-          requestAnimationFrame(renderNoise);
+          demoVideoTex.needsUpdate = true;
+          demoVideoLoopId = requestAnimationFrame(renderNoise);
         };
         
-        screenTexture = new THREE.CanvasTexture(canvas);
-        screenMesh.material.map = screenTexture;
-        screenMesh.material.needsUpdate = true;
-        
         renderNoise();
-        return;
       }
-
-      activeVideoElement.oncanplay = () => {
-        activeVideoElement.play();
-        screenTexture = new THREE.VideoTexture(activeVideoElement);
-        screenTexture.minFilter = THREE.LinearFilter;
-        screenTexture.magFilter = THREE.LinearFilter;
-        screenTexture.format = THREE.RGBAFormat;
-
-        screenMesh.material.map = screenTexture;
-        screenMesh.material.needsUpdate = true;
-      };
     }
 
     function cleanupVideo() {
+      if (demoVideoLoopId) {
+        cancelAnimationFrame(demoVideoLoopId);
+        demoVideoLoopId = null;
+      }
       if (activeVideoElement) {
         activeVideoElement.pause();
         activeVideoElement.src = "";
