@@ -976,18 +976,12 @@
       const screenTexGeo = new THREE.ShapeGeometry(screenTexShape);
       screenTexGeo.center();
       
-      // Default placeholder screen material
-      const screenMaterial = new THREE.MeshStandardMaterial({
-        color: 0xffffff,
-        roughness: 0.15,
-        metalness: 0.1,
-        emissive: 0x111111 // Subtle screen brightness glow
-      });
-
-      screenMesh = new THREE.Mesh(screenTexGeo, screenMaterial);
-      screenMesh.position.z = d / 2 + 0.015; // Placed slightly above bezel
-      phoneGroup.add(screenMesh);
-
+      // Compute normalized UV coordinates [0, 1] for proper texture mapping
+      screenTexGeo.computeBoundingBox();
+      const screenBBox = screenTexGeo.boundingBox;
+      const screenUvs = screenTexGeo.attributes.uv;
+      const screenPositions = screenTexGeo.attributes.position;
+      const rangeX = screenBBox.max.x - screenBBox.min.x;
       // 4. Dynamic Island Notch
       const islandShape = new THREE.Shape();
       const iw = 0.8;
@@ -1001,14 +995,13 @@
       islandShape.quadraticCurveTo(iw/2, ih/2, iw/2 - ir, ih/2);
       islandShape.lineTo(-iw/2 + ir, ih/2);
       islandShape.quadraticCurveTo(-iw/2, ih/2, -iw/2, ih/2 - ir);
-      islandShape.lineTo(-islandShape.currentPoint.x, -islandShape.currentPoint.y); // close path correctly
+      islandShape.lineTo(-iw/2, -ih/2 + ir);
+      islandShape.quadraticCurveTo(-iw/2, -ih/2, -iw/2 + ir, -ih/2);
       
       const islandGeo = new THREE.ShapeGeometry(islandShape);
       islandGeo.center();
       const islandMesh = new THREE.Mesh(islandGeo, bezelMaterial);
       islandMesh.position.set(0, sth/2 - 0.22, d / 2 + 0.018); // Top middle
-      phoneGroup.add(islandMesh);
-      
       // Inner camera dot in Dynamic Island
       const notchCameraGeo = new THREE.CircleGeometry(0.04, 16);
       const notchCameraMesh = new THREE.Mesh(notchCameraGeo, new THREE.MeshBasicMaterial({ color: 0x050510 }));
