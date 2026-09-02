@@ -48,6 +48,36 @@
             Pair
           </button>
         </div>
+        <div class="host-page-option">
+          <a href="/" class="host-link-btn" title="Go to Host Page">
+            <svg class="ui-icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="3" width="20" height="14"></rect>
+              <line x1="8" y1="21" x2="16" y2="21"></line>
+              <line x1="12" y1="17" x2="12" y2="21"></line>
+            </svg>
+            <span>Go to Host Page</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Waiting for Host Section -->
+      <div id="waiting-section" style="display: none; flex-direction: column; gap: 12px; width: 100%;">
+        <div class="waiting-field">
+          <div class="waiting-field-header">
+            <span class="status-dot connecting"></span>
+            <span class="waiting-field-title">Waiting for Host...</span>
+          </div>
+          <p class="subtitle" style="text-align: center; margin: 0; justify-content: center;">
+            Pairing request sent. Waiting for host to approve.
+          </p>
+        </div>
+        <button id="cancel-wait-btn" class="btn btn-secondary" style="width: 100%; padding: 11px 16px;">
+          <svg class="ui-icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+          <span>Cancel</span>
+        </button>
       </div>
 
       <!-- Enable Tracking & Screen Share Buttons (Visible after connected) -->
@@ -275,6 +305,8 @@
     const roomInput = document.getElementById('room-input');
     const connectBtn = document.getElementById('connect-btn');
     const pairingSection = document.getElementById('pairing-section');
+    const waitingSection = document.getElementById('waiting-section');
+    const cancelWaitBtn = document.getElementById('cancel-wait-btn');
     const trackingSection = document.getElementById('tracking-section');
     const trackBtn = document.getElementById('track-btn');
     const trackBtnText = document.getElementById('track-btn-text');
@@ -332,11 +364,33 @@
       });
 
       peer.on('error', (err) => {
-        console.error('Peer error:', err);
-        updateStatus('disconnected', 'Signal Error');
-        connectBtn.disabled = false;
-        roomInput.disabled = false;
+        console.error('Peer signal error:', err);
+        returnToPairPage('Signal Error');
       });
+
+      peer.on('disconnected', () => {
+        console.warn('Peer disconnected from signaling server.');
+        returnToPairPage('Signal Error');
+      });
+    }
+
+    function returnToPairPage(errorMessage) {
+      if (activeConn) {
+        try { activeConn.close(); } catch(e) {}
+        activeConn = null;
+      }
+      document.body.classList.remove('is-paired');
+      updateStatus('disconnected', errorMessage || 'Signal Error');
+      if (waitingSection) waitingSection.style.display = 'none';
+      if (trackingSection) trackingSection.style.display = 'none';
+      if (remoteControlSection) remoteControlSection.style.display = 'none';
+      if (phoneDisconnectBtn) phoneDisconnectBtn.style.display = 'none';
+      pairingSection.style.display = 'block';
+      connectBtn.disabled = false;
+      roomInput.disabled = false;
+      stopTracking();
+      stopScreenShare();
+      stopCameraShare();
     }
 
     // Extract room ID from URL (supports /pair/1234, /remote/1234, ?room=1234, or #1234)
@@ -399,10 +453,14 @@
       }
 
       const targetPeerId = 'omgmimiq-' + room;
-      updateStatus('connecting', 'Connecting...');
+      updateStatus('connecting', 'Waiting for Host...');
       connectBtn.disabled = true;
       roomInput.disabled = true;
-
+      pairingSection.style.display = 'none';
+      if (waitingSection) waitingSection.style.display = 'flex';
+      trackingSection.style.display = 'none';
+      if (remoteControlSection) remoteControlSection.style.display = 'none';
+      if (phoneDisconnectBtn) phoneDisconnectBtn.style.display = 'none';
       try {
         if (activeConn) {
           activeConn.close();
@@ -416,7 +474,7 @@
           console.log('Connected to desktop peer, awaiting approval:', targetPeerId);
           updateStatus('connecting', 'Waiting for Host...');
           pairingSection.style.display = 'none';
-          trackingSection.style.display = 'none';
+          if (waitingSection) waitingSection.style.display = 'flex';
           if (remoteControlSection) remoteControlSection.style.display = 'none';
           if (phoneDisconnectBtn) phoneDisconnectBtn.style.display = 'none';
           deviceInfo.innerText = 'Pairing request sent. Waiting for host to approve...';
@@ -438,7 +496,7 @@
             console.log('Host accepted pairing request!');
             document.body.classList.add('is-paired');
             updateStatus('connected', 'Connected');
-            pairingSection.style.display = 'none';
+            if (waitingSection) waitingSection.style.display = 'none';
             trackingSection.style.display = 'flex';
             if (remoteControlSection) remoteControlSection.style.display = 'flex';
             if (phoneDisconnectBtn) phoneDisconnectBtn.style.display = 'inline-block';
@@ -453,7 +511,7 @@
             console.log('Host rejected pairing request.');
             document.body.classList.remove('is-paired');
             updateStatus('disconnected', 'Declined by Host');
-            pairingSection.style.display = 'block';
+            if (waitingSection) waitingSection.style.display = 'none';
             trackingSection.style.display = 'none';
             if (remoteControlSection) remoteControlSection.style.display = 'none';
             if (phoneDisconnectBtn) phoneDisconnectBtn.style.display = 'none';
@@ -467,7 +525,7 @@
             console.log('Host disconnected session.');
             document.body.classList.remove('is-paired');
             updateStatus('disconnected', 'Disconnected');
-            pairingSection.style.display = 'block';
+            if (waitingSection) waitingSection.style.display = 'none';
             trackingSection.style.display = 'none';
             if (remoteControlSection) remoteControlSection.style.display = 'none';
             if (phoneDisconnectBtn) phoneDisconnectBtn.style.display = 'none';
@@ -484,7 +542,7 @@
           console.log('Peer connection closed');
           document.body.classList.remove('is-paired');
           updateStatus('disconnected', 'Disconnected');
-          pairingSection.style.display = 'block';
+          if (waitingSection) waitingSection.style.display = 'none';
           trackingSection.style.display = 'none';
           if (remoteControlSection) remoteControlSection.style.display = 'none';
           if (phoneDisconnectBtn) phoneDisconnectBtn.style.display = 'none';
@@ -498,19 +556,39 @@
 
         activeConn.on('error', (err) => {
           console.error('DataConnection error:', err);
-          updateStatus('disconnected', 'Connection Error');
-          if (phoneDisconnectBtn) phoneDisconnectBtn.style.display = 'none';
-          connectBtn.disabled = false;
-          roomInput.disabled = false;
+          returnToPairPage('Signal Error');
         });
 
       } catch (e) {
         console.error('Failed to connect:', e);
-        updateStatus('disconnected', 'Failed to connect');
-        if (phoneDisconnectBtn) phoneDisconnectBtn.style.display = 'none';
-        connectBtn.disabled = false;
-        roomInput.disabled = false;
+        returnToPairPage('Signal Error');
       }
+    }
+
+    function cancelPairRequest() {
+      console.log('Pairing request cancelled by user');
+      if (activeConn) {
+        try {
+          activeConn.send({ type: 'disconnect' });
+        } catch (e) {}
+        try {
+          activeConn.close();
+        } catch (e) {}
+        activeConn = null;
+      }
+      document.body.classList.remove('is-paired');
+      updateStatus('disconnected', 'Cancelled');
+      if (waitingSection) waitingSection.style.display = 'none';
+      pairingSection.style.display = 'block';
+      trackingSection.style.display = 'none';
+      if (remoteControlSection) remoteControlSection.style.display = 'none';
+      if (phoneDisconnectBtn) phoneDisconnectBtn.style.display = 'none';
+      connectBtn.disabled = false;
+      roomInput.disabled = false;
+    }
+
+    if (cancelWaitBtn) {
+      cancelWaitBtn.addEventListener('click', cancelPairRequest);
     }
 
     function disconnectFromHost() {
@@ -528,6 +606,7 @@
       stopScreenShare();
       stopCameraShare();
       updateStatus('disconnected', 'Disconnected');
+      if (waitingSection) waitingSection.style.display = 'none';
       pairingSection.style.display = 'block';
       trackingSection.style.display = 'none';
       if (remoteControlSection) remoteControlSection.style.display = 'none';

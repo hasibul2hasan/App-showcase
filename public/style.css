@@ -293,6 +293,128 @@ body {
   box-shadow: var(--shadow-sm);
 }
 
+/* Navigation Links between Host & Mobile Pair Page */
+.pair-page-section {
+  width: 100%;
+  margin-top: 10px;
+  border-top: 1px solid var(--panel-border);
+  padding-top: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.pairing-link-section {
+  width: 100%;
+  margin-top: 6px;
+  display: flex;
+  justify-content: center;
+}
+
+.pairing-link-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 12px;
+  background: #181a20;
+  border: 1px solid var(--panel-border);
+  border-radius: 0;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-decoration: none;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+
+.pairing-link-btn:hover {
+  background: #22252e;
+  border-color: #3b3f4b;
+  color: #ffffff;
+}
+
+.host-page-option {
+  width: 100%;
+  margin-top: 8px;
+  display: flex;
+  justify-content: center;
+}
+
+.host-link-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 10px 14px;
+  background: #181a20;
+  border: 1px solid var(--panel-border);
+  border-radius: 0;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-decoration: none;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+
+.host-link-btn:hover {
+  background: #22252e;
+  border-color: #3b3f4b;
+  color: #ffffff;
+}
+
+[data-theme="light"] .pairing-link-btn,
+[data-theme="light"] .host-link-btn {
+  background: #f0f2f5;
+  border-color: #d1d5db;
+  color: #4b5563;
+}
+
+[data-theme="light"] .pairing-link-btn:hover,
+[data-theme="light"] .host-link-btn:hover {
+  background: #e2e8f0;
+  color: #111827;
+}
+
+/* Waiting for Host Field & Cancel Option */
+.waiting-field {
+  width: 100%;
+  background: #181a20;
+  border: 1px solid var(--panel-border);
+  border-radius: 0;
+  padding: 16px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+}
+
+[data-theme="light"] .waiting-field {
+  background: #f8fafc;
+}
+
+.waiting-field-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.waiting-field-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.02em;
+}
+
 /* Status Indicator */
 .status-bar {
   display: flex;
@@ -317,7 +439,6 @@ body {
 
 .status-dot.connected {
   background: var(--success-color);
-  box-shadow: 0 0 8px var(--success-color);
 }
 
 .status-dot.disconnected {

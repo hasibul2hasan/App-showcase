@@ -44,6 +44,21 @@
         Scan QR code with mobile device:
       </p>
       <div id="qrcode"></div>
+      <!-- Section to go to the pair page -->
+      <div class="pair-page-section">
+        <a id="go-to-pair-page-link" href="/phone.html" target="_blank" class="pairing-link-btn" title="Open Mobile Controller Pair Page in a new tab">
+          <svg class="ui-icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="5" y="2" width="14" height="20"></rect>
+            <line x1="12" y1="18" x2="12.01" y2="18"></line>
+          </svg>
+          <span>Go to Pair Page</span>
+          <svg class="ui-icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+            <polyline points="15 3 21 3 21 9"></polyline>
+            <line x1="10" y1="14" x2="21" y2="3"></line>
+          </svg>
+        </a>
+      </div>
     </div>
   </div>
 
@@ -205,6 +220,11 @@
 
       const phoneUrl = `${window.location.protocol}//${host}/pair/${roomCode}`;
       
+      const pairLink = document.getElementById('go-to-pair-page-link');
+      if (pairLink) {
+        pairLink.href = `/pair/${roomCode}`;
+      }
+
       const qrContainer = document.getElementById("qrcode");
       if (qrContainer && typeof QRCode !== 'undefined') {
         qrContainer.innerHTML = "";
