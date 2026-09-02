@@ -3,11 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Real-Time Motion-Synced 3D Mobile Mockup</title>
+  <title>iPhone 17 Pro 3D Motion Showcase</title>
   <link rel="stylesheet" href="/style.css">
-  <!-- Three.js and OrbitControls CDN -->
+  <!-- Three.js, OrbitControls, and 3D Asset Loaders (GLTF, FBX, OBJ) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fflate@0.7.4/umd/index.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/FBXLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/OBJLoader.js"></script>
   <!-- QRCode.js CDN for pairing link -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <!-- PeerJS CDN for WebRTC P2P Sync -->
@@ -34,11 +38,11 @@
       <div class="header">
         <div class="logo">
           <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6.429 9.75L2.25 12l4.179 2.25m0-4.5l5.571 3 5.571-3m-11.142 0L12 7.5l5.571 2.25m0 0L21.75 12l-4.179 2.25m0 0l-5.571 3-5.571-3"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3"></path>
           </svg>
-          <span>3D Motion Showcase</span>
+          <span>iPhone 17 Pro Showcase</span>
         </div>
-        <p class="subtitle">Interactive 3D device mockup synced via WebRTC P2P</p>
+        <p class="subtitle">Interactive 3D iPhone 17 Pro mockup synced via WebRTC P2P</p>
       </div>
 
       <!-- Pairing Panel -->
@@ -81,7 +85,7 @@
         <div class="control-group">
           <label class="control-label">Source Type</label>
           <select id="screen-source-select">
-            <option value="clock">Fallback: Dynamic Home Screen</option>
+            <option value="clock">iOS 18/19 Pro Dynamic Screen</option>
             <option value="image">Custom Screenshot (.png/.jpg)</option>
             <option value="video">Custom Demo Video (.mp4)</option>
             <option value="mirror">WebRTC Mirror (From Mobile Browser)</option>
@@ -171,11 +175,37 @@
         </button>
       </div>
 
-      <!-- Environment Customizer -->
+      <!-- Environment & Finish Customizer -->
       <div class="panel">
-        <span class="panel-title">4. Staging Environment</span>
+        <span class="panel-title">4. iPhone 17 Pro Finish & Staging</span>
         
         <div class="control-group">
+          <label class="control-label">Titanium Finish</label>
+          <div class="finish-swatches" id="titanium-finish-picker">
+            <div class="finish-chip active" data-finish="natural" title="Natural Titanium">
+              <div class="finish-dot" style="background: linear-gradient(135deg, #a8a49d, #78746e);"></div>
+              <span>Natural</span>
+            </div>
+            <div class="finish-chip" data-finish="desert" title="Desert Titanium">
+              <div class="finish-dot" style="background: linear-gradient(135deg, #cfb799, #9e8568);"></div>
+              <span>Desert</span>
+            </div>
+            <div class="finish-chip" data-finish="black" title="Black Titanium">
+              <div class="finish-dot" style="background: linear-gradient(135deg, #3d3e42, #1c1d20);"></div>
+              <span>Black</span>
+            </div>
+            <div class="finish-chip" data-finish="teal" title="Deep Teal Titanium">
+              <div class="finish-dot" style="background: linear-gradient(135deg, #385661, #18272d);"></div>
+              <span>Teal</span>
+            </div>
+            <div class="finish-chip" data-finish="white" title="White Titanium">
+              <div class="finish-dot" style="background: linear-gradient(135deg, #f0f2f5, #b8bac0);"></div>
+              <span>White</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="control-group" style="margin-top: 6px;">
           <label class="control-label">Studio Background Style</label>
           <select id="bg-preset-select">
             <option value="dark-slate">Deep Slate Gradient (Default)</option>
@@ -385,6 +415,16 @@
     // Preset background presets selector
     bgPresetSelect.addEventListener('change', () => {
       updateStagingEnvironment();
+    });
+
+    // Titanium finish switcher listener
+    document.querySelectorAll('#titanium-finish-picker .finish-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const finish = chip.getAttribute('data-finish');
+        if (finish && typeof setTitaniumFinish === 'function') {
+          setTitaniumFinish(finish);
+        }
+      });
     });
 
     // File inputs listeners
@@ -767,8 +807,8 @@
       camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
       camera.position.set(0, 0, 11);
 
-      // 3. Renderer
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      // 3. Renderer with Logarithmic Depth Buffer (Eliminates Z-fighting artifacts)
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, logarithmicDepthBuffer: true });
       renderer.setSize(container.clientWidth, container.clientHeight);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       renderer.shadowMap.enabled = true;
@@ -832,68 +872,476 @@
       rimLight.position.set(0, 5, -10);
       scene.add(rimLight);
 
-      // 7. Construct Procedural Smartphone Model
+      // 7. Construct Procedural Smartphone Model & Load 3D Asset
       buildSmartphone();
+      load3DModel();
 
       // Set initial environment preset styling
       updateStagingEnvironment();
 
       // Init clock screen texture as default
       setupClockCanvas();
+      applyClockTexture();
 
       // Begin animation loops
       animate();
     }
 
-    // Build the high-fidelity phone model using geometries
-    function buildSmartphone() {
-      phoneGroup = new THREE.Group();
+    // ----------------------------------------------------
+    // iPhone 17 Pro 3D Model Loader (FBX / OBJ / GLTF)
+    // ----------------------------------------------------
+    let isExternalModelActive = false;
+    let loadedModelObject = null;
 
-      // Materials
-      const chassisColor = 0x27272a; // Metallic slate grey
-      const frameColor = 0x3f3f46;
-      
-      const frameMaterial = new THREE.MeshStandardMaterial({
-        color: frameColor,
-        metalness: 0.95,
-        roughness: 0.15,
-        roughnessMap: null, // Shiny polished metal edges
+    // Preload textures
+    const modelTextureLoader = new THREE.TextureLoader();
+    const silverBodyTex = modelTextureLoader.load('/models/textures/iPhone17Pro_Silver_2.webp');
+    silverBodyTex.encoding = THREE.sRGBEncoding;
+
+    const orangeBodyTex = modelTextureLoader.load('/models/textures/iPhone17Pro_Orange_2.webp');
+    orangeBodyTex.encoding = THREE.sRGBEncoding;
+
+    const blueBodyTex = modelTextureLoader.load('/models/textures/iPhone17Pro_Blue.webp');
+    blueBodyTex.encoding = THREE.sRGBEncoding;
+
+    const appleLogoTex = modelTextureLoader.load('/models/textures/logo.jpg');
+    appleLogoTex.encoding = THREE.sRGBEncoding;
+
+    const cameraOpticsTex = modelTextureLoader.load('/models/textures/c196869ba35a99db52058c627f65c63c_icon.png');
+    cameraOpticsTex.encoding = THREE.sRGBEncoding;
+
+    function setupLoadedModel(object, formatName) {
+      console.log('✅ iPhone 17 Pro 3D Model Loaded Successfully via', formatName, object);
+      isExternalModelActive = true;
+      if (phoneGroup) scene.remove(phoneGroup);
+
+      loadedModelObject = object;
+      phoneGroup = new THREE.Group();
+      phoneGroup.add(loadedModelObject);
+
+      // Force update of initial world matrices
+      loadedModelObject.updateMatrixWorld(true);
+
+      // 1. Determine natural orientation & orientation corrections
+      const initialBox = new THREE.Box3().setFromObject(loadedModelObject);
+      const initialSize = initialBox.getSize(new THREE.Vector3());
+
+      // If the longest dimension is Z, rotate by -90 deg on X (Blender Z-up -> Three.js Y-up)
+      if (initialSize.z > initialSize.y && initialSize.z > initialSize.x) {
+        loadedModelObject.rotation.x = -Math.PI / 2;
+        loadedModelObject.updateMatrixWorld(true);
+      }
+
+      // 2. Compute post-rotation bounding box & center
+      const rotatedBox = new THREE.Box3().setFromObject(loadedModelObject);
+      const rotatedSize = rotatedBox.getSize(new THREE.Vector3());
+      const rotatedCenter = rotatedBox.getCenter(new THREE.Vector3());
+
+      // Center the model relative to phoneGroup
+      loadedModelObject.position.x = -rotatedCenter.x;
+      loadedModelObject.position.y = -rotatedCenter.y;
+      loadedModelObject.position.z = -rotatedCenter.z;
+      loadedModelObject.updateMatrixWorld(true);
+
+      // 3. Scale phoneGroup so phone height is exactly 7.0 units
+      const currentHeight = rotatedSize.y > 0 ? rotatedSize.y : 1.0;
+      const targetHeight = 7.0;
+      const scaleFactor = targetHeight / currentHeight;
+
+      phoneGroup.scale.set(scaleFactor, scaleFactor, scaleFactor);
+
+      // 4. Configure PBR materials with high-res texture maps
+      let foundScreen = false;
+
+      loadedModelObject.traverse((child) => {
+        if (child.isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+          child.frustumCulled = false;
+
+          const matName = (child.material && child.material.name) ? child.material.name.toLowerCase() : '';
+          const nodeName = (child.name || '').toLowerCase();
+
+          // Find variant ancestor
+          let variant = 'grey';
+          let curr = child.parent;
+          while (curr && curr !== loadedModelObject) {
+            const pName = (curr.name || '').toLowerCase();
+            if (pName.includes('orange') || pName.includes('desert')) { variant = 'orange'; break; }
+            if (pName.includes('blue') || pName.includes('teal')) { variant = 'blue'; break; }
+            if (pName.includes('grey') || pName.includes('silver')) { variant = 'grey'; break; }
+            curr = curr.parent;
+          }
+
+          // A. Screen Display
+          if (
+            !foundScreen && (
+              matName.includes('display') || 
+              matName.includes('screen') || 
+              nodeName.includes('display') || 
+              nodeName.includes('screen')
+            )
+          ) {
+            child.material = new THREE.MeshBasicMaterial({
+              map: clockCanvasTexture,
+              color: 0xffffff,
+              side: THREE.FrontSide
+            });
+            screenMesh = child;
+            foundScreen = true;
+            return;
+          }
+
+          // B. Apple Logo
+          if (matName.includes('logo') || nodeName.includes('logo')) {
+            child.material = new THREE.MeshStandardMaterial({
+              map: appleLogoTex,
+              roughness: 0.15,
+              metalness: 0.85,
+              side: THREE.FrontSide,
+              polygonOffset: true,
+              polygonOffsetFactor: -1,
+              polygonOffsetUnits: -1
+            });
+            return;
+          }
+
+          // C. Camera Lenses / Optics / Flash
+          if (matName.includes('cam') || matName.includes('torch') || matName.includes('lens')) {
+            child.material = new THREE.MeshStandardMaterial({
+              map: cameraOpticsTex,
+              roughness: 0.1,
+              metalness: 0.9,
+              side: THREE.FrontSide,
+              polygonOffset: true,
+              polygonOffsetFactor: -1,
+              polygonOffsetUnits: -1
+            });
+            return;
+          }
+
+          // D. LiDAR / Mic sensors
+          if (matName.includes('lidar') || matName.includes('mic')) {
+            child.material = new THREE.MeshStandardMaterial({
+              color: 0x111111,
+              roughness: 0.8,
+              metalness: 0.2,
+              side: THREE.FrontSide
+            });
+            return;
+          }
+
+          // E. Antenna bands / lines
+          if (matName.includes('line') || matName.includes('strip')) {
+            child.material = new THREE.MeshStandardMaterial({
+              color: 0x24262c,
+              roughness: 0.85,
+              metalness: 0.15,
+              side: THREE.FrontSide
+            });
+            return;
+          }
+
+          // F. Bezels
+          if (matName.includes('border')) {
+            child.material = new THREE.MeshStandardMaterial({
+              color: 0x050508,
+              roughness: 0.5,
+              metalness: 0.1,
+              side: THREE.FrontSide
+            });
+            return;
+          }
+
+          // G. Body & Back Panel based on Variant
+          if (variant === 'orange' || matName.includes('orange') || nodeName.includes('orange')) {
+            child.material = new THREE.MeshStandardMaterial({
+              map: orangeBodyTex,
+              color: 0xffffff,
+              roughness: 0.35,
+              metalness: 0.45,
+              side: THREE.FrontSide
+            });
+          } else if (variant === 'blue' || matName.includes('blue') || nodeName.includes('blue')) {
+            child.material = new THREE.MeshStandardMaterial({
+              map: blueBodyTex,
+              color: 0xffffff,
+              roughness: 0.35,
+              metalness: 0.45,
+              side: THREE.FrontSide
+            });
+          } else {
+            // Default Grey / Silver
+            child.material = new THREE.MeshStandardMaterial({
+              map: silverBodyTex,
+              color: 0xffffff,
+              roughness: 0.35,
+              metalness: 0.45,
+              side: THREE.FrontSide
+            });
+          }
+        }
       });
 
+      // 5. Activate default variant (Grey)
+      setModelVariant('grey');
+
+      scene.add(phoneGroup);
+      applyClockTexture();
+      console.log('✅ iPhone 17 Pro model fully textured. Height: 7.0 units. ScaleFactor:', scaleFactor);
+    }
+
+    function load3DModel() {
+      // 1. Try FBX loader (for iphone17pro.fbx)
+      if (typeof THREE.FBXLoader === 'function') {
+        const fbxLoader = new THREE.FBXLoader();
+        fbxLoader.setResourcePath('/models/textures/');
+        
+        const tryFBX = (path, onFail) => {
+          fbxLoader.load(
+            path,
+            (fbx) => setupLoadedModel(fbx, 'FBXLoader (' + path + ')'),
+            undefined,
+            (err) => {
+              console.warn('FBX load attempt for', path, 'failed:', err);
+              if (onFail) onFail(err);
+            }
+          );
+        };
+
+        tryFBX('/models/iphone17pro.fbx', () => {
+          tryFBX('/models/I phone 17 pro.fbx', () => {
+            tryGLTF();
+          });
+        });
+        return;
+      }
+      tryGLTF();
+    }
+
+    function tryGLTF() {
+      if (typeof THREE.GLTFLoader !== 'function') return;
+      const gltfLoader = new THREE.GLTFLoader();
+      const tryPath = (path, onFail) => {
+        gltfLoader.load(
+          path,
+          (gltf) => setupLoadedModel(gltf.scene, 'GLTFLoader (' + path + ')'),
+          undefined,
+          onFail
+        );
+      };
+
+      tryPath('/models/iphone17pro.glb', () => {
+        tryPath('/models/iphone17pro.gltf', () => {
+          console.log('Using procedural CAD model.');
+        });
+      });
+    }
+
+    function setModelVariant(variantName) {
+      if (!isExternalModelActive || !loadedModelObject) return;
+      const target = (variantName || '').toLowerCase();
+
+      // In FBX hierarchy, the root level children are Grey, Orange, Blue
+      loadedModelObject.children.forEach(rootChild => {
+        const name = (rootChild.name || '').toLowerCase();
+        if (name.includes('grey') || name.includes('silver')) {
+          rootChild.visible = (target === 'grey');
+        } else if (name.includes('orange') || name.includes('desert')) {
+          rootChild.visible = (target === 'orange');
+        } else if (name.includes('blue') || name.includes('teal')) {
+          rootChild.visible = (target === 'blue');
+        }
+      });
+    }
+
+    // ----------------------------------------------------
+    // iPhone 17 Pro Finishes & Procedural Geometry
+    // ----------------------------------------------------
+    const TITANIUM_FINISHES = {
+      black: {
+        name: 'Black Titanium',
+        frame: 0x1b1c20,
+        body: 0x222328,
+        backGlass: 0x2e3037,
+        accent: 0x383940,
+        chamfer: 0x45474f,
+        logo: 0x585a63
+      },
+      natural: {
+        name: 'Natural Titanium',
+        frame: 0x9ca0aa,
+        body: 0xa8acb6,
+        backGlass: 0xbcc0cb,
+        accent: 0xd0d4de,
+        chamfer: 0xe0e4ed,
+        logo: 0xf0f3f8
+      },
+      desert: {
+        name: 'Desert Titanium',
+        frame: 0xad9377,
+        body: 0xb89f84,
+        backGlass: 0xc8b095,
+        accent: 0xd5beaa,
+        chamfer: 0xe4cfb9,
+        logo: 0xede0cb
+      },
+      teal: {
+        name: 'Deep Teal Titanium',
+        frame: 0x1e333b,
+        body: 0x253d47,
+        backGlass: 0x304f5c,
+        accent: 0x3d6273,
+        chamfer: 0x4f7b8f,
+        logo: 0x6498ad
+      },
+      white: {
+        name: 'White Titanium',
+        frame: 0xc8ccd4,
+        body: 0xd8dce4,
+        backGlass: 0xeaedf4,
+        accent: 0xf0f2f7,
+        chamfer: 0xf6f7fb,
+        logo: 0xffffff
+      }
+    };
+
+    let currentFinish = 'black';
+    let bodyMaterials = [];
+    let frameMaterials = [];
+    let backGlassMaterials = [];
+    let accentMaterials = [];
+    let logoMaterial = null;
+
+    function setTitaniumFinish(finishKey) {
+      const finish = TITANIUM_FINISHES[finishKey];
+      if (!finish) return;
+      currentFinish = finishKey;
+
+      if (isExternalModelActive) {
+        if (finishKey === 'desert') setModelVariant('orange');
+        else if (finishKey === 'teal') setModelVariant('blue');
+        else setModelVariant('grey');
+      }
+
+      bodyMaterials.forEach(m => m.color.setHex(finish.body));
+      frameMaterials.forEach(m => m.color.setHex(finish.frame));
+      backGlassMaterials.forEach(m => m.color.setHex(finish.backGlass));
+      accentMaterials.forEach(m => m.color.setHex(finish.chamfer));
+      if (logoMaterial) logoMaterial.color.setHex(finish.logo);
+
+      // Update UI finish chip active state
+      document.querySelectorAll('#titanium-finish-picker .finish-chip').forEach(chip => {
+        chip.classList.toggle('active', chip.getAttribute('data-finish') === finishKey);
+      });
+    }
+
+    // Build the high-fidelity iPhone 17 Pro model using geometries
+    function buildSmartphone() {
+      phoneGroup = new THREE.Group();
+      bodyMaterials = [];
+      frameMaterials = [];
+      backGlassMaterials = [];
+      accentMaterials = [];
+
+      const initialFinish = TITANIUM_FINISHES[currentFinish];
+
+      // Grade 5 Titanium Frame Material (Satin brushed metal)
+      const frameMaterial = new THREE.MeshStandardMaterial({
+        color: initialFinish.frame,
+        metalness: 0.92,
+        roughness: 0.24,
+      });
+      frameMaterials.push(frameMaterial);
+
+      // Visor / Unibody Base Body Material
       const bodyMaterial = new THREE.MeshStandardMaterial({
-        color: chassisColor,
+        color: initialFinish.body,
+        metalness: 0.85,
+        roughness: 0.28
+      });
+      bodyMaterials.push(bodyMaterial);
+
+      // Distinct Frosted Matte Back Glass Inset Material
+      const backGlassMaterial = new THREE.MeshStandardMaterial({
+        color: initialFinish.backGlass,
+        metalness: 0.65,
+        roughness: 0.38
+      });
+      backGlassMaterials.push(backGlassMaterial);
+
+      // Polished Titanium Chamfer / Bevel Accent Material
+      const chamferMaterial = new THREE.MeshStandardMaterial({
+        color: initialFinish.chamfer,
+        metalness: 0.98,
+        roughness: 0.12
+      });
+      accentMaterials.push(chamferMaterial);
+
+      // Ceramic Shield Screen Bezel (Glossy deep black)
+      const bezelMaterial = new THREE.MeshStandardMaterial({
+        color: 0x050508,
+        roughness: 0.04,
+        metalness: 0.85
+      });
+
+      // Polished Titanium Apple Logo Material
+      const appleLogoMat = new THREE.MeshStandardMaterial({
+        color: initialFinish.logo,
+        metalness: 0.96,
+        roughness: 0.14
+      });
+      logoMaterial = appleLogoMat;
+
+      // Camera Sapphire Glass Element
+      const lensGlassMat = new THREE.MeshStandardMaterial({
+        color: 0x020408,
+        roughness: 0.01,
+        metalness: 0.96,
+        transparent: true,
+        opacity: 0.92
+      });
+
+      // Camera AR Multi-Coating Optical Reflection Accent
+      const lensIrisMat = new THREE.MeshStandardMaterial({
+        color: 0x064e52, // Emerald & indigo anti-reflective coating sheen
+        roughness: 0.08,
+        metalness: 0.95
+      });
+
+      // Camera Outer Titanium Ring
+      const lensRingOuterMat = new THREE.MeshStandardMaterial({
+        color: initialFinish.chamfer,
+        metalness: 0.96,
+        roughness: 0.16
+      });
+      accentMaterials.push(lensRingOuterMat);
+
+      // Camera Inner Knurled Collar Ring
+      const lensRingInnerMat = new THREE.MeshStandardMaterial({
+        color: 0x16171a,
         metalness: 0.85,
         roughness: 0.3
       });
 
-      const bezelMaterial = new THREE.MeshStandardMaterial({
-        color: 0x09090b, // Glossy deep black
-        roughness: 0.05,
-        metalness: 0.9
+      // LiDAR Sensor Material
+      const lidarMat = new THREE.MeshStandardMaterial({
+        color: 0x0c0e12,
+        roughness: 0.75,
+        metalness: 0.35
       });
 
-      const lensGlassMat = new THREE.MeshStandardMaterial({
-        color: 0x050505,
-        roughness: 0.01,
-        metalness: 0.95,
-        transparent: true,
-        opacity: 0.9
-      });
+      // Flash Materials
+      const flashLEDMat = new THREE.MeshBasicMaterial({ color: 0xfffae8 });
+      const flashRingMat = new THREE.MeshStandardMaterial({ color: 0xd4d4d8, metalness: 0.85, roughness: 0.25 });
 
-      const lensAccentMat = new THREE.MeshStandardMaterial({
-        color: 0x6366f1, // Glowing blue accent
-        roughness: 0.2,
-        metalness: 0.9
-      });
+      // iPhone 17 Pro Dimensions
+      const w = 3.35;   // Width
+      const h = 7.0;    // Height
+      const r = 0.52;   // Refined smooth curved corners
+      const d = 0.22;   // Thin unibody chassis depth
 
-      // Dimensions
-      const w = 3.4;   // Width
-      const h = 6.9;   // Height
-      const r = 0.45;  // Corner radius
-      const d = 0.24;  // Frame depth/thickness
-      const steps = 12;
-
-      // 1. Chassis Body (Rounded rectangle shape extruded)
+      // 1. Titanium Chassis Body (Extruded Rounded Rectangle)
       const shape = new THREE.Shape();
       shape.moveTo(-w/2 + r, -h/2);
       shape.lineTo(w/2 - r, -h/2);
@@ -905,42 +1353,53 @@
       shape.lineTo(-w/2, -h/2 + r);
       shape.quadraticCurveTo(-w/2, -h/2, -w/2 + r, -h/2);
 
-      const extrudeSettings = {
-        depth: d - 0.04,
+      const chassisGeo = new THREE.ExtrudeGeometry(shape, {
+        depth: d - 0.03,
         bevelEnabled: true,
-        bevelSegments: 4,
+        bevelSegments: 5,
         steps: 1,
-        bevelSize: 0.02,
-        bevelThickness: 0.02
-      };
-
-      const chassisGeo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+        bevelSize: 0.015,
+        bevelThickness: 0.015
+      });
       chassisGeo.center();
       const chassisMesh = new THREE.Mesh(chassisGeo, bodyMaterial);
       chassisMesh.castShadow = true;
       chassisMesh.receiveShadow = true;
       phoneGroup.add(chassisMesh);
 
-      // 2. Shiny Metallic Outer Border Frame
+      // 2. Titanium Perimeter Frame Band
       const frameGeo = new THREE.ExtrudeGeometry(shape, {
         depth: d,
         bevelEnabled: true,
-        bevelSegments: 2,
+        bevelSegments: 3,
         steps: 1,
         bevelSize: 0.01,
         bevelThickness: 0.01
       });
       frameGeo.center();
       const frameMesh = new THREE.Mesh(frameGeo, frameMaterial);
-      frameMesh.scale.set(1.008, 1.008, 0.99); // Outer frame wrapper
+      frameMesh.scale.set(1.006, 1.006, 0.995);
       phoneGroup.add(frameMesh);
 
-      // 3. Front Screen Glass Panel
+      // 3. Subtle Antenna Break Lines
+      const antennaMat = new THREE.MeshBasicMaterial({ color: 0x18191c });
+      const addAntennaBand = (x, y) => {
+        const antGeo = new THREE.BoxGeometry(0.02, 0.08, d + 0.01);
+        const antMesh = new THREE.Mesh(antGeo, antennaMat);
+        antMesh.position.set(x, y, 0);
+        phoneGroup.add(antMesh);
+      };
+      addAntennaBand(-w/2 - 0.005, h/2 - 1.0);
+      addAntennaBand(w/2 + 0.005, h/2 - 1.0);
+      addAntennaBand(-w/2 - 0.005, -h/2 + 1.0);
+      addAntennaBand(w/2 + 0.005, -h/2 + 1.0);
+
+      // 4. Ultra-Slim Front Display Bezel (Sub-millimeter uniform border)
+      const sw = w - 0.09;
+      const sh = h - 0.09;
+      const sr = r - 0.045;
+
       const screenShape = new THREE.Shape();
-      const sw = w - 0.16;
-      const sh = h - 0.16;
-      const sr = r - 0.08;
-      
       screenShape.moveTo(-sw/2 + sr, -sh/2);
       screenShape.lineTo(sw/2 - sr, -sh/2);
       screenShape.quadraticCurveTo(sw/2, -sh/2, sw/2, -sh/2 + sr);
@@ -951,44 +1410,37 @@
       screenShape.lineTo(-sw/2, -sh/2 + sr);
       screenShape.quadraticCurveTo(-sw/2, -sh/2, -sw/2 + sr, -sh/2);
 
-      // Bezel plate
       const bezelGeo = new THREE.ShapeGeometry(screenShape);
       bezelGeo.center();
       const bezelMesh = new THREE.Mesh(bezelGeo, bezelMaterial);
-      bezelMesh.position.z = d / 2 + 0.012; // Flush with front
+      bezelMesh.position.z = d / 2 + 0.011;
       phoneGroup.add(bezelMesh);
 
-      // Screen plane for textures (slightly smaller than bezel to show boundary outline)
-      const screenTexShape = new THREE.Shape();
-      const stw = sw - 0.08;
-      const sth = sh - 0.08;
-      const str = sr - 0.04;
-      
-      screenTexShape.moveTo(-stw/2 + str, -sth/2);
-      screenTexShape.lineTo(stw/2 - str, -sth/2);
-      screenTexShape.quadraticCurveTo(stw/2, -sth/2, stw/2, -sth/2 + str);
-      screenTexShape.lineTo(stw/2, sth/2 - str);
-      screenTexShape.quadraticCurveTo(stw/2, sth/2, stw/2 - str, sth/2);
-      screenTexShape.lineTo(-stw/2 + str, sth/2);
-      screenTexShape.quadraticCurveTo(-stw/2, sth/2, -stw/2, sth/2 - str);
-      screenTexShape.lineTo(-stw/2, -sth/2 + str);
-      screenTexShape.quadraticCurveTo(-stw/2, -sth/2, -stw/2 + str, -sth/2);
-
-      const screenTexGeo = new THREE.ShapeGeometry(screenTexShape);
+      // 5. Active Screen Display Mesh with Precise UV Mapping
+      const screenTexGeo = new THREE.ShapeGeometry(screenShape);
       screenTexGeo.center();
-      
-      // Compute normalized UV coordinates [0, 1] for proper texture mapping
-      screenTexGeo.computeBoundingBox();
-      const screenBBox = screenTexGeo.boundingBox;
-      const screenUvs = screenTexGeo.attributes.uv;
-      const screenPositions = screenTexGeo.attributes.position;
-      const rangeX = screenBBox.max.x - screenBBox.min.x;
-      // 4. Dynamic Island Notch
+
+      const pos = screenTexGeo.attributes.position;
+      const uvs = new Float32Array(pos.count * 2);
+      for (let i = 0; i < pos.count; i++) {
+        uvs[i * 2] = (pos.getX(i) + sw / 2) / sw;
+        uvs[i * 2 + 1] = (pos.getY(i) + sh / 2) / sh;
+      }
+      screenTexGeo.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+
+      const screenMaterial = new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        side: THREE.DoubleSide
+      });
+      screenMesh = new THREE.Mesh(screenTexGeo, screenMaterial);
+      screenMesh.position.z = d / 2 + 0.013;
+      phoneGroup.add(screenMesh);
+
+      // 6. Dynamic Island Pill
+      const iw = 0.72;
+      const ih = 0.20;
+      const ir = 0.10;
       const islandShape = new THREE.Shape();
-      const iw = 0.8;
-      const ih = 0.22;
-      const ir = 0.11;
-      
       islandShape.moveTo(-iw/2 + ir, -ih/2);
       islandShape.lineTo(iw/2 - ir, -ih/2);
       islandShape.quadraticCurveTo(iw/2, -ih/2, iw/2, -ih/2 + ir);
@@ -998,120 +1450,337 @@
       islandShape.quadraticCurveTo(-iw/2, ih/2, -iw/2, ih/2 - ir);
       islandShape.lineTo(-iw/2, -ih/2 + ir);
       islandShape.quadraticCurveTo(-iw/2, -ih/2, -iw/2 + ir, -ih/2);
-      
+
       const islandGeo = new THREE.ShapeGeometry(islandShape);
       islandGeo.center();
-      const islandMesh = new THREE.Mesh(islandGeo, bezelMaterial);
-      islandMesh.position.set(0, sth/2 - 0.22, d / 2 + 0.018); // Top middle
-      // Inner camera dot in Dynamic Island
-      const notchCameraGeo = new THREE.CircleGeometry(0.04, 16);
-      const notchCameraMesh = new THREE.Mesh(notchCameraGeo, new THREE.MeshBasicMaterial({ color: 0x050510 }));
-      notchCameraMesh.position.set(-0.2, sth/2 - 0.22, d / 2 + 0.02);
-      phoneGroup.add(notchCameraMesh);
+      const islandMesh = new THREE.Mesh(islandGeo, new THREE.MeshBasicMaterial({ color: 0x000000 }));
+      const islandPosY = sh/2 - 0.20;
+      islandMesh.position.set(0, islandPosY, d / 2 + 0.015);
+      phoneGroup.add(islandMesh);
 
-      // Speaker line
-      const speakerGeo = new THREE.BoxGeometry(0.5, 0.02, 0.02);
-      const speakerMesh = new THREE.Mesh(speakerGeo, frameMaterial);
-      speakerMesh.position.set(0, sh/2 - 0.02, d / 2 + 0.015);
-      phoneGroup.add(speakerMesh);
+      // Front FaceTime Camera Lens Dot & Anti-Reflective Reflex
+      const frontCamGeo = new THREE.CircleGeometry(0.038, 24);
+      const frontCamMesh = new THREE.Mesh(frontCamGeo, new THREE.MeshBasicMaterial({ color: 0x020306 }));
+      frontCamMesh.position.set(-0.18, islandPosY, d / 2 + 0.016);
+      phoneGroup.add(frontCamMesh);
 
-      // 5. Side Control Buttons
-      // Volume Up
-      const volUpGeo = new THREE.BoxGeometry(0.04, 0.5, 0.06);
+      const frontCamReflexGeo = new THREE.CircleGeometry(0.016, 16);
+      const frontCamReflexMesh = new THREE.Mesh(frontCamReflexGeo, new THREE.MeshBasicMaterial({ color: 0x312e81 }));
+      frontCamReflexMesh.position.set(-0.17, islandPosY + 0.008, d / 2 + 0.017);
+      phoneGroup.add(frontCamReflexMesh);
+
+      // Face ID IR Sensor Aperture
+      const faceIdGeo = new THREE.CircleGeometry(0.028, 16);
+      const faceIdMesh = new THREE.Mesh(faceIdGeo, new THREE.MeshBasicMaterial({ color: 0x0a0a0f }));
+      faceIdMesh.position.set(0.16, islandPosY, d / 2 + 0.016);
+      phoneGroup.add(faceIdMesh);
+
+      // Top Bezel Earpiece Speaker Slit
+      const earpieceGeo = new THREE.BoxGeometry(0.48, 0.014, 0.01);
+      const earpieceMesh = new THREE.Mesh(earpieceGeo, new THREE.MeshBasicMaterial({ color: 0x111114 }));
+      earpieceMesh.position.set(0, sh/2 + 0.02, d / 2 + 0.012);
+      phoneGroup.add(earpieceMesh);
+
+      // 7. Side Control Buttons
+      // LEFT PROFILE:
+      // Action Button (Solid rounded pill button above Volume Up)
+      const actionBtnGeo = new THREE.BoxGeometry(0.035, 0.28, 0.05);
+      const actionBtnMesh = new THREE.Mesh(actionBtnGeo, frameMaterial);
+      actionBtnMesh.position.set(-w/2 - 0.012, h/2 - 1.45, 0);
+      phoneGroup.add(actionBtnMesh);
+
+      // Volume Up Button
+      const volUpGeo = new THREE.BoxGeometry(0.035, 0.48, 0.05);
       const volUpMesh = new THREE.Mesh(volUpGeo, frameMaterial);
-      volUpMesh.position.set(-w/2 - 0.01, h/2 - 2.0, 0);
+      volUpMesh.position.set(-w/2 - 0.012, h/2 - 2.0, 0);
       phoneGroup.add(volUpMesh);
 
-      // Volume Down
+      // Volume Down Button
       const volDownMesh = volUpMesh.clone();
-      volDownMesh.position.set(-w/2 - 0.01, h/2 - 2.7, 0);
+      volDownMesh.position.set(-w/2 - 0.012, h/2 - 2.6, 0);
       phoneGroup.add(volDownMesh);
 
-      // Power Button
-      const powerGeo = new THREE.BoxGeometry(0.04, 0.7, 0.06);
-      const powerMesh = new THREE.Mesh(powerGeo, frameMaterial);
-      powerMesh.position.set(w/2 + 0.01, h/2 - 2.2, 0);
-      phoneGroup.add(powerMesh);
+      // RIGHT PROFILE:
+      // Side / Power / Siri Button
+      const sideBtnGeo = new THREE.BoxGeometry(0.035, 0.72, 0.05);
+      const sideBtnMesh = new THREE.Mesh(sideBtnGeo, frameMaterial);
+      sideBtnMesh.position.set(w/2 + 0.012, h/2 - 2.1, 0);
+      phoneGroup.add(sideBtnMesh);
 
-      // 6. Realistic Back Triple-Camera Module Bump
-      const bumpW = 1.3;
-      const bumpH = 1.3;
-      const bumpR = 0.22;
-      const cameraBumpShape = new THREE.Shape();
-      cameraBumpShape.moveTo(-bumpW/2 + bumpR, -bumpH/2);
-      cameraBumpShape.lineTo(bumpW/2 - bumpR, -bumpH/2);
-      cameraBumpShape.quadraticCurveTo(bumpW/2, -bumpH/2, bumpW/2, -bumpH/2 + bumpR);
-      cameraBumpShape.lineTo(bumpW/2, bumpH/2 - bumpR);
-      cameraBumpShape.quadraticCurveTo(bumpW/2, bumpH/2, bumpW/2 - bumpR, bumpH/2);
-      cameraBumpShape.lineTo(-bumpW/2 + bumpR, bumpH/2);
-      cameraBumpShape.quadraticCurveTo(-bumpW/2, bumpH/2, -bumpW/2, bumpH/2 - bumpR);
-      cameraBumpShape.lineTo(-bumpW/2, -bumpH/2 + bumpR);
-      cameraBumpShape.quadraticCurveTo(-bumpW/2, -bumpH/2, -bumpW/2 + bumpR, -bumpH/2);
+      // Dedicated Camera Control Button (iPhone 16/17 Pro signature sapphire capacitive touch sensor)
+      const cameraControlPlateGeo = new THREE.BoxGeometry(0.025, 0.62, 0.045);
+      const cameraControlMesh = new THREE.Mesh(cameraControlPlateGeo, chamferMaterial);
+      cameraControlMesh.position.set(w/2 + 0.008, -h/2 + 1.85, 0);
+      phoneGroup.add(cameraControlMesh);
 
-      const cameraBumpGeo = new THREE.ExtrudeGeometry(cameraBumpShape, {
-        depth: 0.06,
+      const camControlSensorGeo = new THREE.BoxGeometry(0.015, 0.54, 0.035);
+      const camControlSensorMesh = new THREE.Mesh(camControlSensorGeo, new THREE.MeshStandardMaterial({
+        color: initialFinish.frame,
+        metalness: 0.9,
+        roughness: 0.2
+      }));
+      camControlSensorMesh.position.set(w/2 + 0.014, -h/2 + 1.85, 0);
+      phoneGroup.add(camControlSensorMesh);
+      accentMaterials.push(camControlSensorMesh.material);
+
+      // 8. Bottom Profile (USB-C & Acoustic Speaker / Mic Grilles & Screws)
+      const usbcRimGeo = new THREE.BoxGeometry(0.44, 0.01, 0.12);
+      const usbcRimMesh = new THREE.Mesh(usbcRimGeo, chamferMaterial);
+      usbcRimMesh.position.set(0, -h/2 - 0.005, 0);
+      phoneGroup.add(usbcRimMesh);
+
+      const usbcHoleGeo = new THREE.BoxGeometry(0.36, 0.02, 0.08);
+      const usbcHoleMesh = new THREE.Mesh(usbcHoleGeo, new THREE.MeshBasicMaterial({ color: 0x050505 }));
+      usbcHoleMesh.position.set(0, -h/2 - 0.008, 0);
+      phoneGroup.add(usbcHoleMesh);
+
+      const usbcPinGeo = new THREE.BoxGeometry(0.24, 0.01, 0.02);
+      const usbcPinMesh = new THREE.Mesh(usbcPinGeo, new THREE.MeshStandardMaterial({ color: 0xd4af37, metalness: 0.9, roughness: 0.2 }));
+      usbcPinMesh.position.set(0, -h/2 - 0.005, 0);
+      phoneGroup.add(usbcPinMesh);
+
+      // Acoustic hole arrays
+      const makeGrille = (startX, count, spacing) => {
+        for (let i = 0; i < count; i++) {
+          const holeGeo = new THREE.CylinderGeometry(0.022, 0.022, 0.02, 12);
+          holeGeo.rotateZ(Math.PI / 2);
+          const holeMesh = new THREE.Mesh(holeGeo, new THREE.MeshBasicMaterial({ color: 0x08080a }));
+          holeMesh.position.set(startX + i * spacing, -h/2 - 0.002, 0);
+          phoneGroup.add(holeMesh);
+        }
+      };
+      makeGrille(-0.75, 3, 0.09); // Mic
+      makeGrille(0.48, 5, 0.09);  // Speaker
+
+      // Pentalobe screws
+      const screwGeo = new THREE.CylinderGeometry(0.028, 0.028, 0.01, 12);
+      const makeScrew = (x) => {
+        const screwMesh = new THREE.Mesh(screwGeo, chamferMaterial);
+        screwMesh.position.set(x, -h/2 - 0.002, 0);
+        phoneGroup.add(screwMesh);
+      };
+      makeScrew(-0.30);
+      makeScrew(0.30);
+
+      // 9. Rear Horizontal Camera Visor Island (iPhone 17 Pro Signature)
+      const visorW = 2.94;
+      const visorH = 1.95;
+      const visorR = 0.44;
+      const visorShape = new THREE.Shape();
+      visorShape.moveTo(-visorW/2 + visorR, -visorH/2);
+      visorShape.lineTo(visorW/2 - visorR, -visorH/2);
+      visorShape.quadraticCurveTo(visorW/2, -visorH/2, visorW/2, -visorH/2 + visorR);
+      visorShape.lineTo(visorW/2, visorH/2 - visorR);
+      visorShape.quadraticCurveTo(visorW/2, visorH/2, visorW/2 - visorR, visorH/2);
+      visorShape.lineTo(-visorW/2 + visorR, visorH/2);
+      visorShape.quadraticCurveTo(-visorW/2, visorH/2, -visorW/2, visorH/2 - visorR);
+      visorShape.lineTo(-visorW/2, -visorH/2 + visorR);
+      visorShape.quadraticCurveTo(-visorW/2, -visorH/2, -visorW/2 + visorR, -visorH/2);
+
+      // Outer Extruded Metallic Visor Frame
+      const visorGeo = new THREE.ExtrudeGeometry(visorShape, {
+        depth: 0.070,
         bevelEnabled: true,
-        bevelSegments: 3,
+        bevelSegments: 4,
         steps: 1,
         bevelSize: 0.02,
         bevelThickness: 0.02
       });
-      cameraBumpGeo.center();
-      const cameraBumpMesh = new THREE.Mesh(cameraBumpGeo, bodyMaterial);
-      cameraBumpMesh.position.set(-w/2 + bumpW/2 + 0.2, h/2 - bumpH/2 - 0.2, -d/2 - 0.03);
-      cameraBumpMesh.rotation.y = Math.PI; // Pointing backwards
-      phoneGroup.add(cameraBumpMesh);
+      visorGeo.center();
+      const visorMesh = new THREE.Mesh(visorGeo, frameMaterial);
+      const visorCenterY = h/2 - visorH/2 - 0.22;
+      visorMesh.position.set(0, visorCenterY, -d/2 - 0.036);
+      visorMesh.rotation.y = Math.PI;
+      phoneGroup.add(visorMesh);
 
-      // Camera Ring Frames and Lenses
-      const ringGeo = new THREE.CylinderGeometry(0.18, 0.18, 0.06, 32);
-      ringGeo.rotateX(Math.PI / 2);
-      const glassGeo = new THREE.CylinderGeometry(0.14, 0.14, 0.065, 32);
-      glassGeo.rotateX(Math.PI / 2);
-      const lensApertureGeo = new THREE.CylinderGeometry(0.05, 0.05, 0.07, 32);
-      lensApertureGeo.rotateX(Math.PI / 2);
+      // Inner Visor Faceplate Insert
+      const insertW = visorW - 0.08;
+      const insertH = visorH - 0.08;
+      const insertR = visorR - 0.04;
+      const insertShape = new THREE.Shape();
+      insertShape.moveTo(-insertW/2 + insertR, -insertH/2);
+      insertShape.lineTo(insertW/2 - insertR, -insertH/2);
+      insertShape.quadraticCurveTo(insertW/2, -insertH/2, insertW/2, -insertH/2 + insertR);
+      insertShape.lineTo(insertW/2, insertH/2 - insertR);
+      insertShape.quadraticCurveTo(insertW/2, insertH/2, insertW/2 - insertR, insertH/2);
+      insertShape.lineTo(-insertW/2 + insertR, insertH/2);
+      insertShape.quadraticCurveTo(-insertW/2, insertH/2, -insertW/2, insertH/2 - insertR);
+      insertShape.lineTo(-insertW/2, -insertH/2 + insertR);
+      insertShape.quadraticCurveTo(-insertW/2, -insertH/2, -insertW/2 + insertR, -insertH/2);
 
-      const makeLens = (x, y) => {
-        const cameraLensGroup = new THREE.Group();
-        
-        const ring = new THREE.Mesh(ringGeo, frameMaterial);
-        const glass = new THREE.Mesh(glassGeo, lensGlassMat);
-        const innerAperture = new THREE.Mesh(lensApertureGeo, new THREE.MeshBasicMaterial({ color: 0x000000 }));
-        
-        // Highlight reflection accent
-        const reflex = new THREE.Mesh(glassGeo, lensAccentMat);
-        reflex.scale.set(0.9, 0.9, 0.2);
-        reflex.position.z = 0.02;
+      const insertGeo = new THREE.ShapeGeometry(insertShape);
+      insertGeo.center();
+      const insertMat = new THREE.MeshStandardMaterial({
+        color: 0x050508,
+        roughness: 0.08,
+        metalness: 0.92
+      });
+      const insertMesh = new THREE.Mesh(insertGeo, insertMat);
+      insertMesh.position.set(0, visorCenterY, -d/2 - 0.082);
+      insertMesh.rotation.y = Math.PI;
+      phoneGroup.add(insertMesh);
 
-        cameraLensGroup.add(ring);
-        cameraLensGroup.add(innerAperture);
-        cameraLensGroup.add(reflex);
-        cameraLensGroup.add(glass);
+      // Raised Camera Pod Base on Left Side (under dual cameras)
+      const podW = 0.88;
+      const podH = 1.62;
+      const podR = 0.38;
+      const podShape = new THREE.Shape();
+      podShape.moveTo(-podW/2 + podR, -podH/2);
+      podShape.lineTo(podW/2 - podR, -podH/2);
+      podShape.quadraticCurveTo(podW/2, -podH/2, podW/2, -podH/2 + podR);
+      podShape.lineTo(podW/2, podH/2 - podR);
+      podShape.quadraticCurveTo(podW/2, podH/2, podW/2 - podR, podH/2);
+      podShape.lineTo(-podW/2 + podR, podH/2);
+      podShape.quadraticCurveTo(-podW/2, podH/2, -podW/2, podH/2 - podR);
+      podShape.lineTo(-podW/2, -podH/2 + podR);
+      podShape.quadraticCurveTo(-podW/2, -podH/2, -podW/2 + podR, -podH/2);
+
+      const podGeo = new THREE.ExtrudeGeometry(podShape, {
+        depth: 0.02,
+        bevelEnabled: true,
+        bevelSegments: 3,
+        steps: 1,
+        bevelSize: 0.012,
+        bevelThickness: 0.012
+      });
+      podGeo.center();
+      const podMesh = new THREE.Mesh(podGeo, frameMaterial);
+      podMesh.position.set(-0.78, visorCenterY, -d/2 - 0.086);
+      podMesh.rotation.y = Math.PI;
+      phoneGroup.add(podMesh);
+
+      // Camera Lenses Geometries
+      const outerRingGeo = new THREE.CylinderGeometry(0.24, 0.24, 0.07, 36);
+      outerRingGeo.rotateX(Math.PI / 2);
+
+      const innerRingGeo = new THREE.CylinderGeometry(0.19, 0.19, 0.075, 36);
+      innerRingGeo.rotateX(Math.PI / 2);
+
+      const lensElementGeo = new THREE.CylinderGeometry(0.155, 0.155, 0.08, 36);
+      lensElementGeo.rotateX(Math.PI / 2);
+
+      const lensIrisGeo = new THREE.CylinderGeometry(0.105, 0.105, 0.085, 36);
+      lensIrisGeo.rotateX(Math.PI / 2);
+
+      const centerApertureGeo = new THREE.CylinderGeometry(0.05, 0.05, 0.09, 36);
+      centerApertureGeo.rotateX(Math.PI / 2);
+
+      const makeProCamera = (x, y, zOffset = 0) => {
+        const camGroup = new THREE.Group();
         
-        cameraLensGroup.position.set(x, y, -d/2 - 0.09);
-        phoneGroup.add(cameraLensGroup);
+        const outerRing = new THREE.Mesh(outerRingGeo, lensRingOuterMat);
+        const innerRing = new THREE.Mesh(innerRingGeo, lensRingInnerMat);
+        const sapphireGlass = new THREE.Mesh(lensElementGeo, lensGlassMat);
+        const irisReflex = new THREE.Mesh(lensIrisGeo, lensIrisMat);
+        irisReflex.position.z = -0.005;
+        const aperture = new THREE.Mesh(centerApertureGeo, new THREE.MeshBasicMaterial({ color: 0x000000 }));
+        aperture.position.z = -0.01;
+
+        const glintGeo = new THREE.CircleGeometry(0.035, 16);
+        const glintMat = new THREE.MeshBasicMaterial({ color: 0x93c5fd, transparent: true, opacity: 0.75 });
+        const glint = new THREE.Mesh(glintGeo, glintMat);
+        glint.position.set(0.045, 0.045, 0.042);
+
+        camGroup.add(outerRing);
+        camGroup.add(innerRing);
+        camGroup.add(irisReflex);
+        camGroup.add(aperture);
+        camGroup.add(sapphireGlass);
+        camGroup.add(glint);
+
+        camGroup.position.set(x, y, -d/2 - 0.10 - zOffset);
+        phoneGroup.add(camGroup);
       };
 
-      // 3 Cameras Layout
-      makeLens(-w/2 + 0.55, h/2 - 0.55);
-      makeLens(-w/2 + 1.15, h/2 - 0.55);
-      makeLens(-w/2 + 0.85, h/2 - 1.15);
+      // 3 Large Pro Cameras inside wide visor (matching clear reference image):
+      // Top-Left Lens
+      makeProCamera(-0.78, visorCenterY + 0.42, 0.015);
+      // Bottom-Left Lens
+      makeProCamera(-0.78, visorCenterY - 0.42, 0.015);
+      // Middle-Top Lens
+      makeProCamera(-0.06, visorCenterY + 0.18, 0);
 
-      // Flash
-      const flashGeo = new THREE.CylinderGeometry(0.07, 0.07, 0.01, 16);
-      flashGeo.rotateX(Math.PI / 2);
-      const flashMesh = new THREE.Mesh(flashGeo, new THREE.MeshBasicMaterial({ color: 0xfffaed }));
-      flashMesh.position.set(-w/2 + 1.15, h/2 - 1.15, -d/2 - 0.07);
-      phoneGroup.add(flashMesh);
+      // LiDAR Scanner Sensor (Bottom-Right of visor)
+      const lidarGeo = new THREE.CylinderGeometry(0.11, 0.11, 0.02, 32);
+      lidarGeo.rotateX(Math.PI / 2);
+      const lidarMesh = new THREE.Mesh(lidarGeo, lidarMat);
+      lidarMesh.position.set(0.86, visorCenterY - 0.38, -d/2 - 0.084);
+      phoneGroup.add(lidarMesh);
+
+      // Adaptive True Tone Flash (Top-Right of visor)
+      const flashBaseGeo = new THREE.CylinderGeometry(0.10, 0.10, 0.02, 32);
+      flashBaseGeo.rotateX(Math.PI / 2);
+      const flashBaseMesh = new THREE.Mesh(flashBaseGeo, flashRingMat);
+      flashBaseMesh.position.set(0.86, visorCenterY + 0.48, -d/2 - 0.084);
+      phoneGroup.add(flashBaseMesh);
+
+      const flashCenterGeo = new THREE.CylinderGeometry(0.065, 0.065, 0.025, 24);
+      flashCenterGeo.rotateX(Math.PI / 2);
+      const flashCenterMesh = new THREE.Mesh(flashCenterGeo, flashLEDMat);
+      flashCenterMesh.position.set(0.86, visorCenterY + 0.48, -d/2 - 0.086);
+      phoneGroup.add(flashCenterMesh);
+
+      // Rear Audio Zoom Microphone Pinhole (Middle-Right between Flash & LiDAR)
+      const rearMicGeo = new THREE.CylinderGeometry(0.025, 0.025, 0.02, 16);
+      rearMicGeo.rotateX(Math.PI / 2);
+      const rearMicMesh = new THREE.Mesh(rearMicGeo, new THREE.MeshBasicMaterial({ color: 0x08080c }));
+      rearMicMesh.position.set(0.86, visorCenterY + 0.16, -d/2 - 0.084);
+      phoneGroup.add(rearMicMesh);
+
+      // 10. Large Inset Frosted Back Glass Panel (Signature iPhone 17 Pro Lower Backplate)
+      const backGlassW = 2.94;
+      const backGlassH = 4.38;
+      const backGlassR = 0.44;
+      const backGlassShape = new THREE.Shape();
+      backGlassShape.moveTo(-backGlassW/2 + backGlassR, -backGlassH/2);
+      backGlassShape.lineTo(backGlassW/2 - backGlassR, -backGlassH/2);
+      backGlassShape.quadraticCurveTo(backGlassW/2, -backGlassH/2, backGlassW/2, -backGlassH/2 + backGlassR);
+      backGlassShape.lineTo(backGlassW/2, backGlassH/2 - backGlassR);
+      backGlassShape.quadraticCurveTo(backGlassW/2, backGlassH/2, backGlassW/2 - backGlassR, backGlassH/2);
+      backGlassShape.lineTo(-backGlassW/2 + backGlassR, backGlassH/2);
+      backGlassShape.quadraticCurveTo(-backGlassW/2, backGlassH/2, -backGlassW/2, backGlassH/2 - backGlassR);
+      backGlassShape.lineTo(-backGlassW/2, -backGlassH/2 + backGlassR);
+      backGlassShape.quadraticCurveTo(-backGlassW/2, -backGlassH/2, -backGlassW/2 + backGlassR, -backGlassH/2);
+
+      const backGlassGeo = new THREE.ShapeGeometry(backGlassShape);
+      backGlassGeo.center();
+      const backGlassMesh = new THREE.Mesh(backGlassGeo, backGlassMaterial);
+      const backGlassCenterY = -1.18;
+      backGlassMesh.position.set(0, backGlassCenterY, -d/2 - 0.012);
+      backGlassMesh.rotation.y = Math.PI;
+      phoneGroup.add(backGlassMesh);
+
+      // 11. Polished Apple Logo Emblem Centered on Back Frosted Glass
+      const appleLogoShape = new THREE.Shape();
+      appleLogoShape.moveTo(0, 0.22);
+      appleLogoShape.bezierCurveTo(0.12, 0.22, 0.18, 0.16, 0.26, 0.16);
+      appleLogoShape.bezierCurveTo(0.35, 0.16, 0.40, 0.23, 0.40, 0.23);
+      appleLogoShape.bezierCurveTo(0.40, 0.23, 0.32, 0.28, 0.32, 0.40);
+      appleLogoShape.bezierCurveTo(0.32, 0.53, 0.43, 0.58, 0.43, 0.58);
+      appleLogoShape.bezierCurveTo(0.43, 0.58, 0.36, 0.78, 0.24, 0.78);
+      appleLogoShape.bezierCurveTo(0.17, 0.78, 0.12, 0.73, 0.02, 0.73);
+      appleLogoShape.bezierCurveTo(-0.08, 0.73, -0.15, 0.78, -0.22, 0.78);
+      appleLogoShape.bezierCurveTo(-0.35, 0.78, -0.45, 0.57, -0.45, 0.41);
+      appleLogoShape.bezierCurveTo(-0.45, 0.25, -0.32, 0.16, -0.20, 0.16);
+      appleLogoShape.bezierCurveTo(-0.12, 0.16, -0.05, 0.22, 0, 0.22);
+
+      const appleLogoGeo = new THREE.ShapeGeometry(appleLogoShape);
+      appleLogoGeo.center();
+      const appleLogoMesh = new THREE.Mesh(appleLogoGeo, appleLogoMat);
+      appleLogoMesh.scale.set(0.68, -0.68, 0.68);
+      appleLogoMesh.rotation.y = Math.PI;
+      appleLogoMesh.position.set(0, -0.30, -d/2 - 0.015);
+      phoneGroup.add(appleLogoMesh);
 
       // Add entire assembled phone group to scene
       scene.add(phoneGroup);
     }
 
     // ----------------------------------------------------
-    // Screen Custom Screen Textures
+    // Screen Custom Screen Textures (iOS 18/19 Next-Gen Canvas)
     // ----------------------------------------------------
     
-    // 1. Fallback dynamic Clock screen setup
+    // 1. Fallback dynamic iOS Clock screen setup
     function setupClockCanvas() {
       canvasElement = document.createElement('canvas');
       canvasElement.width = 512;
@@ -1119,10 +1788,14 @@
       canvasCtx = canvasElement.getContext('2d');
       
       clockCanvasTexture = new THREE.CanvasTexture(canvasElement);
+      clockCanvasTexture.minFilter = THREE.LinearFilter;
+      clockCanvasTexture.magFilter = THREE.LinearFilter;
       if (screenMesh) {
         screenMesh.material.map = clockCanvasTexture;
+        screenMesh.material.color.setHex(0xffffff);
         screenMesh.material.needsUpdate = true;
       }
+      renderClockCanvas();
     }
 
     function renderClockCanvas() {
@@ -1130,88 +1803,277 @@
 
       const w = canvasElement.width;
       const h = canvasElement.height;
+      const timeNow = Date.now();
 
-      // Draw background dark cyber gradient
-      const grad = canvasCtx.createRadialGradient(w/2, h/2, 50, w/2, h/2, w);
-      grad.addColorStop(0, '#1e1b4b'); // Indigo 950
-      grad.addColorStop(1, '#030712'); // Gray 950
-      canvasCtx.fillStyle = grad;
+      // 1. iPhone 17 Pro Silver-Slate Fluid Aura Wallpaper (Matching Reference Image)
+      const bgGrad = canvasCtx.createLinearGradient(0, 0, w, h);
+      bgGrad.addColorStop(0, '#9bb1c8');     // Ice-blue slate top-left
+      bgGrad.addColorStop(0.3, '#748ba3');
+      bgGrad.addColorStop(0.65, '#3b4b5e');
+      bgGrad.addColorStop(1, '#151d28');      // Deep slate-charcoal bottom-right
+      canvasCtx.fillStyle = bgGrad;
       canvasCtx.fillRect(0, 0, w, h);
 
-      // Draw neon grid waves
-      canvasCtx.strokeStyle = 'rgba(99, 102, 241, 0.06)';
-      canvasCtx.lineWidth = 2;
-      for (let i = 0; i < h; i += 60) {
-        canvasCtx.beginPath();
-        canvasCtx.moveTo(0, i);
-        canvasCtx.lineTo(w, i);
-        canvasCtx.stroke();
-      }
-      for (let j = 0; j < w; j += 60) {
-        canvasCtx.beginPath();
-        canvasCtx.moveTo(j, 0);
-        canvasCtx.lineTo(j, h);
-        canvasCtx.stroke();
-      }
+      // Fluid sculpted organic ribbon wave contour from reference image
+      canvasCtx.save();
+      // Flowing dark shadow ribbon
+      canvasCtx.fillStyle = '#111822';
+      canvasCtx.beginPath();
+      canvasCtx.moveTo(w * 0.15, 0);
+      canvasCtx.bezierCurveTo(w * 0.5, h * 0.25, w * 0.95, h * 0.45, w * 0.85, h * 0.65);
+      canvasCtx.bezierCurveTo(w * 0.75, h * 0.82, w * 0.35, h * 0.92, w * 0.45, h);
+      canvasCtx.lineTo(0, h);
+      canvasCtx.lineTo(0, 0);
+      canvasCtx.closePath();
+      canvasCtx.fill();
 
-      // Draw battery and status icons
-      canvasCtx.fillStyle = '#64748b';
-      canvasCtx.font = 'bold 20px Inter, sans-serif';
-      canvasCtx.fillText("5G", 40, 70);
-      canvasCtx.fillText("⚡ 88%", w - 110, 70);
+      // Soft ambient light wave glow
+      const fluidGrad = canvasCtx.createRadialGradient(w * 0.35, h * 0.72, 30, w * 0.35, h * 0.72, 280);
+      fluidGrad.addColorStop(0, 'rgba(186, 215, 242, 0.9)');
+      fluidGrad.addColorStop(0.5, 'rgba(147, 180, 211, 0.5)');
+      fluidGrad.addColorStop(1, 'rgba(30, 41, 59, 0)');
+      canvasCtx.fillStyle = fluidGrad;
+      canvasCtx.beginPath();
+      canvasCtx.arc(w * 0.35, h * 0.72, 280, 0, Math.PI * 2);
+      canvasCtx.fill();
 
-      // Draw clock
+      // Sweeping luminous silver curve contour
+      canvasCtx.lineWidth = 12;
+      canvasCtx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+      canvasCtx.beginPath();
+      canvasCtx.moveTo(w * 0.15, 0);
+      canvasCtx.bezierCurveTo(w * 0.5, h * 0.25, w * 0.95, h * 0.45, w * 0.85, h * 0.65);
+      canvasCtx.bezierCurveTo(w * 0.75, h * 0.82, w * 0.35, h * 0.92, w * 0.45, h);
+      canvasCtx.stroke();
+      canvasCtx.restore();
+
+      // 2. iOS Status Bar
       const now = new Date();
-      const timeStr = now.toTimeString().split(' ')[0]; // HH:MM:SS
+      const hours = now.getHours().toString().padStart(2, '0');
+      const minutes = now.getMinutes().toString().padStart(2, '0');
+      const seconds = now.getSeconds().toString().padStart(2, '0');
+      const timeShort = `${hours}:${minutes}`;
+      const timeFull = `${hours}:${minutes}:${seconds}`;
       const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
 
-      // Draw time
+      // Left: Current Time
       canvasCtx.fillStyle = '#ffffff';
-      canvasCtx.font = 'bold 74px Inter, sans-serif';
+      canvasCtx.font = '600 20px -apple-system, BlinkMacSystemFont, "Inter", sans-serif';
+      canvasCtx.textAlign = 'left';
+      canvasCtx.fillText(timeShort, 42, 45);
+
+      // Right: Signal, 5G, Wi-Fi & Battery Capsule
+      // 4 Signal Bars
+      canvasCtx.fillStyle = '#ffffff';
+      for (let i = 0; i < 4; i++) {
+        const barH = 5 + i * 3;
+        canvasCtx.fillRect(w - 145 + i * 5, 45 - barH, 3, barH);
+      }
+
+      // 5G Icon
+      canvasCtx.font = '700 13px -apple-system, BlinkMacSystemFont, "Inter", sans-serif';
+      canvasCtx.fillText('5G', w - 120, 45);
+
+      // Battery Capsule
+      const batX = w - 80;
+      const batY = 32;
+      canvasCtx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+      canvasCtx.lineWidth = 1.5;
+      canvasCtx.beginPath();
+      canvasCtx.roundRect(batX, batY, 34, 16, 4);
+      canvasCtx.stroke();
+      // Battery nub
+      canvasCtx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+      canvasCtx.fillRect(batX + 35, batY + 4, 2, 8);
+      // Battery charge fill (88%)
+      canvasCtx.fillStyle = '#22c55e'; // Vibrant Apple Green
+      canvasCtx.beginPath();
+      canvasCtx.roundRect(batX + 2, batY + 2, 26, 12, 2);
+      canvasCtx.fill();
+      // Battery text inside
+      canvasCtx.fillStyle = '#000000';
+      canvasCtx.font = 'bold 9px -apple-system, BlinkMacSystemFont, "Inter", sans-serif';
       canvasCtx.textAlign = 'center';
-      canvasCtx.shadowColor = 'rgba(99, 102, 241, 0.8)';
-      canvasCtx.shadowBlur = 15;
-      canvasCtx.fillText(timeStr, w/2, h/2 - 80);
-      canvasCtx.shadowBlur = 0; // reset shadow
+      canvasCtx.fillText('88', batX + 15, batY + 11);
 
-      // Draw date
-      canvasCtx.fillStyle = '#818cf8';
-      canvasCtx.font = '500 24px Inter, sans-serif';
-      canvasCtx.fillText(dateStr, w/2, h/2 - 20);
+      // 3. Dynamic Island Live Activity (Compact interactive status at top)
+      const diW = 210;
+      const diH = 40;
+      const diX = (w - diW) / 2;
+      const diY = 16;
+      canvasCtx.fillStyle = '#000000';
+      canvasCtx.beginPath();
+      canvasCtx.roundRect(diX, diY, diW, diH, diH / 2);
+      canvasCtx.fill();
+      canvasCtx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+      canvasCtx.lineWidth = 1;
+      canvasCtx.stroke();
 
-      // Decorative phone mockup home items (App mock icons)
-      const apps = [
-        { label: 'Camera', color: '#ec4899', icon: '📸' },
-        { label: 'Photos', color: '#3b82f6', icon: '🎨' },
-        { label: 'Safari', color: '#10b981', icon: '🧭' },
-        { label: 'Settings', color: '#64748b', icon: '⚙️' }
-      ];
-
-      apps.forEach((app, i) => {
-        const x = (w / 5) * (i + 1);
-        const y = h - 250;
-        
-        // Icon circular background
-        canvasCtx.fillStyle = app.color;
+      // Mini animated audio equalizer in Dynamic Island (left side)
+      canvasCtx.fillStyle = '#38bdf8';
+      for (let i = 0; i < 4; i++) {
+        const hVal = 6 + Math.abs(Math.sin((timeNow / 200) + i * 1.2)) * 14;
         canvasCtx.beginPath();
-        canvasCtx.arc(x, y, 36, 0, Math.PI * 2);
+        canvasCtx.roundRect(diX + 18 + i * 6, diY + diH/2 - hVal/2, 3, hVal, 1.5);
         canvasCtx.fill();
+      }
 
-        // Icon Emoji
-        canvasCtx.fillStyle = '#ffffff';
-        canvasCtx.font = '32px Arial';
-        canvasCtx.fillText(app.icon, x, y + 10);
+      // Center title in Dynamic Island
+      canvasCtx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+      canvasCtx.font = '600 12px -apple-system, BlinkMacSystemFont, "Inter", sans-serif';
+      canvasCtx.textAlign = 'center';
+      canvasCtx.fillText('Live Activity', diX + diW/2, diY + diH/2 + 4);
 
-        // App Label
-        canvasCtx.fillStyle = '#94a3b8';
-        canvasCtx.font = '500 16px Inter, sans-serif';
-        canvasCtx.fillText(app.label, x, y + 60);
-      });
+      // Mini album thumbnail on right side of Dynamic Island
+      const miniAlbGrad = canvasCtx.createLinearGradient(diX + diW - 36, diY + 8, diX + diW - 12, diY + 32);
+      miniAlbGrad.addColorStop(0, '#38bdf8');
+      miniAlbGrad.addColorStop(1, '#6366f1');
+      canvasCtx.fillStyle = miniAlbGrad;
+      canvasCtx.beginPath();
+      canvasCtx.roundRect(diX + diW - 36, diY + 8, 24, 24, 6);
+      canvasCtx.fill();
 
-      // Bottom lock bar
+      // 4. Next-Gen iOS 18/19 Depth Clock
+      // Lock Screen Date
+      canvasCtx.fillStyle = 'rgba(241, 245, 249, 0.9)';
+      canvasCtx.font = '600 24px -apple-system, BlinkMacSystemFont, "Inter", sans-serif';
+      canvasCtx.textAlign = 'center';
+      canvasCtx.fillText(dateStr, w/2, 175);
+
+      // Large iOS Clock Display
+      canvasCtx.fillStyle = '#ffffff';
+      canvasCtx.font = '700 88px -apple-system, BlinkMacSystemFont, "Inter", sans-serif';
+      canvasCtx.shadowColor = 'rgba(15, 23, 42, 0.5)';
+      canvasCtx.shadowBlur = 18;
+      canvasCtx.fillText(timeShort, w/2, 270);
+      canvasCtx.shadowBlur = 0; // Reset shadow
+
+      // 5. Glassmorphic Apple Music Live Activity Widget Card
+      const cardX = 32;
+      const cardY = 560;
+      const cardW = 448;
+      const cardH = 175;
+      const cardR = 24;
+
+      // Card Frosted Glass Background
+      canvasCtx.save();
+      canvasCtx.fillStyle = 'rgba(15, 23, 42, 0.72)';
+      canvasCtx.beginPath();
+      canvasCtx.roundRect(cardX, cardY, cardW, cardH, cardR);
+      canvasCtx.fill();
+      canvasCtx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+      canvasCtx.lineWidth = 1.5;
+      canvasCtx.stroke();
+
+      // Album Art Cover
+      const albX = cardX + 20;
+      const albY = cardY + 20;
+      const albSize = 75;
+      const albGrad = canvasCtx.createLinearGradient(albX, albY, albX + albSize, albY + albSize);
+      albGrad.addColorStop(0, '#38bdf8');
+      albGrad.addColorStop(0.5, '#6366f1');
+      albGrad.addColorStop(1, '#a855f7');
+      canvasCtx.fillStyle = albGrad;
+      canvasCtx.beginPath();
+      canvasCtx.roundRect(albX, albY, albSize, albSize, 14);
+      canvasCtx.fill();
+
+      // Music Icon Inside Album Art
+      canvasCtx.fillStyle = '#ffffff';
+      canvasCtx.font = '32px Arial';
+      canvasCtx.textAlign = 'center';
+      canvasCtx.fillText('🎵', albX + albSize/2, albY + albSize/2 + 12);
+
+      // Song Title & Artist
+      canvasCtx.fillStyle = '#ffffff';
+      canvasCtx.font = 'bold 20px -apple-system, BlinkMacSystemFont, "Inter", sans-serif';
+      canvasCtx.textAlign = 'left';
+      canvasCtx.fillText('Aura Titanium', albX + albSize + 18, albY + 28);
+
+      canvasCtx.fillStyle = 'rgba(203, 213, 225, 0.85)';
+      canvasCtx.font = '500 14px -apple-system, BlinkMacSystemFont, "Inter", sans-serif';
+      canvasCtx.fillText('iPhone 17 Pro • Spatial Audio', albX + albSize + 18, albY + 52);
+
+      // Live Animated Equalizer Bars in Card
+      const eqStartX = cardX + cardW - 70;
+      for (let i = 0; i < 5; i++) {
+        const barHeight = 8 + Math.abs(Math.sin((timeNow / 160) + i * 0.9)) * 24;
+        canvasCtx.fillStyle = '#38bdf8';
+        canvasCtx.beginPath();
+        canvasCtx.roundRect(eqStartX + i * 8, albY + 45 - barHeight/2, 4, barHeight, 2);
+        canvasCtx.fill();
+      }
+
+      // Track Progress Bar
+      const progX = albX;
+      const progY = cardY + 115;
+      const progW = cardW - 40;
+      canvasCtx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+      canvasCtx.beginPath();
+      canvasCtx.roundRect(progX, progY, progW, 4, 2);
+      canvasCtx.fill();
+
+      // Progress Fill (42%)
+      const filledW = progW * 0.42;
       canvasCtx.fillStyle = '#ffffff';
       canvasCtx.beginPath();
-      canvasCtx.roundRect(w/2 - 70, h - 30, 140, 5, 2.5);
+      canvasCtx.roundRect(progX, progY, filledW, 4, 2);
+      canvasCtx.fill();
+      // Progress Knob
+      canvasCtx.beginPath();
+      canvasCtx.arc(progX + filledW, progY + 2, 5, 0, Math.PI * 2);
+      canvasCtx.fill();
+
+      // Timestamps & Controls
+      canvasCtx.fillStyle = 'rgba(148, 163, 184, 0.9)';
+      canvasCtx.font = '500 12px -apple-system, BlinkMacSystemFont, "Inter", sans-serif';
+      canvasCtx.fillText('1:42', progX, progY + 20);
+      canvasCtx.textAlign = 'right';
+      canvasCtx.fillText('-2:38', progX + progW, progY + 20);
+
+      // Controls (Previous, Play, Next)
+      canvasCtx.textAlign = 'center';
+      canvasCtx.fillStyle = '#ffffff';
+      canvasCtx.font = '22px Arial';
+      canvasCtx.fillText('⏮', cardX + cardW/2 - 50, progY + 28);
+      canvasCtx.font = '26px Arial';
+      canvasCtx.fillText('⏸', cardX + cardW/2, progY + 28);
+      canvasCtx.font = '22px Arial';
+      canvasCtx.fillText('⏭', cardX + cardW/2 + 50, progY + 28);
+      canvasCtx.restore();
+
+      // 6. Quick Action Lockscreen Buttons (Flashlight & Camera)
+      // Flashlight Button (Bottom Left)
+      const flashBtnX = 64;
+      const flashBtnY = h - 130;
+      const btnRadius = 30;
+      canvasCtx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+      canvasCtx.beginPath();
+      canvasCtx.arc(flashBtnX, flashBtnY, btnRadius, 0, Math.PI * 2);
+      canvasCtx.fill();
+      canvasCtx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+      canvasCtx.lineWidth = 1;
+      canvasCtx.stroke();
+      canvasCtx.font = '24px Arial';
+      canvasCtx.textAlign = 'center';
+      canvasCtx.fillText('🔦', flashBtnX, flashBtnY + 8);
+
+      // Camera Button (Bottom Right)
+      const camBtnX = w - 64;
+      const camBtnY = h - 130;
+      canvasCtx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+      canvasCtx.beginPath();
+      canvasCtx.arc(camBtnX, camBtnY, btnRadius, 0, Math.PI * 2);
+      canvasCtx.fill();
+      canvasCtx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+      canvasCtx.stroke();
+      canvasCtx.font = '24px Arial';
+      canvasCtx.fillText('📷', camBtnX, camBtnY + 8);
+
+      // 7. Home Indicator Swipe Bar
+      canvasCtx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+      canvasCtx.beginPath();
+      canvasCtx.roundRect(w/2 - 75, h - 35, 150, 5, 2.5);
       canvasCtx.fill();
 
       // Trigger WebGL update
@@ -1224,6 +2086,7 @@
       // Re-bind the clock canvas texture
       if (screenMesh && clockCanvasTexture) {
         screenMesh.material.map = clockCanvasTexture;
+        screenMesh.material.color.setHex(0xffffff);
         screenMesh.material.needsUpdate = true;
         renderClockCanvas();
       }
@@ -1235,6 +2098,7 @@
       // Re-bind the clock canvas texture which will display the mirrored frames
       if (screenMesh && clockCanvasTexture) {
         screenMesh.material.map = clockCanvasTexture;
+        screenMesh.material.color.setHex(0xffffff);
         screenMesh.material.needsUpdate = true;
       }
       
@@ -1278,6 +2142,7 @@
           winTex.magFilter = THREE.LinearFilter;
           if (screenMesh) {
             screenMesh.material.map = winTex;
+            screenMesh.material.color.setHex(0xffffff);
             screenMesh.material.needsUpdate = true;
           }
         };
@@ -1322,6 +2187,7 @@
             
             if (screenMesh) {
               screenMesh.material.map = tex;
+              screenMesh.material.color.setHex(0xffffff);
               screenMesh.material.needsUpdate = true;
             }
           });
@@ -1347,6 +2213,7 @@
         const demoImgTex = new THREE.CanvasTexture(canvas);
         if (screenMesh) {
           screenMesh.material.map = demoImgTex;
+          screenMesh.material.color.setHex(0xffffff);
           screenMesh.material.needsUpdate = true;
         }
       }
@@ -1374,6 +2241,7 @@
 
           if (screenMesh) {
             screenMesh.material.map = videoTex;
+            screenMesh.material.color.setHex(0xffffff);
             screenMesh.material.needsUpdate = true;
           }
         };
@@ -1388,6 +2256,7 @@
         const demoVideoTex = new THREE.CanvasTexture(canvas);
         if (screenMesh) {
           screenMesh.material.map = demoVideoTex;
+          screenMesh.material.color.setHex(0xffffff);
           screenMesh.material.needsUpdate = true;
         }
         

@@ -384,6 +384,58 @@ select:focus {
   border-color: var(--accent-color);
 }
 
+/* iPhone 17 Pro Titanium Finish Selector */
+.finish-swatches {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.finish-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 8px 4px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.finish-chip:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-2px);
+}
+
+.finish-chip.active {
+  border-color: var(--accent-color);
+  background: rgba(99, 102, 241, 0.15);
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.3);
+}
+
+.finish-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+.finish-chip span {
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.finish-chip.active span {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
 /* Buttons */
 .btn {
   width: 100%;
