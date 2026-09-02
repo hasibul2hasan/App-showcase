@@ -80,6 +80,26 @@
         </button>
       </div>
 
+      <!-- Disconnected Notification Section (Shown when disconnected via host) -->
+      <div id="disconnected-section" style="display: none; flex-direction: column; gap: 12px; width: 100%;">
+        <div class="disconnected-field">
+          <div class="disconnected-field-header">
+            <span class="status-dot disconnected"></span>
+            <span class="disconnected-field-title" id="disconnected-title">Disconnected</span>
+          </div>
+          <p class="subtitle" id="disconnected-desc" style="text-align: center; margin: 0; justify-content: center;">
+            Session was disconnected by host.
+          </p>
+        </div>
+        <button id="go-to-pair-btn" class="btn btn-primary" style="width: 100%; padding: 11px 16px;">
+          <svg class="ui-icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+          </svg>
+          <span>Go to Pair Screen</span>
+        </button>
+      </div>
+
       <!-- Enable Tracking & Screen Share Buttons (Visible after connected) -->
       <div id="tracking-section" style="display: none; flex-direction: column; gap: 12px; align-items: stretch; width: 100%;">
         <!-- Motion Tracking Button -->
@@ -307,6 +327,10 @@
     const pairingSection = document.getElementById('pairing-section');
     const waitingSection = document.getElementById('waiting-section');
     const cancelWaitBtn = document.getElementById('cancel-wait-btn');
+    const disconnectedSection = document.getElementById('disconnected-section');
+    const disconnectedTitle = document.getElementById('disconnected-title');
+    const disconnectedDesc = document.getElementById('disconnected-desc');
+    const goToPairBtn = document.getElementById('go-to-pair-btn');
     const trackingSection = document.getElementById('tracking-section');
     const trackBtn = document.getElementById('track-btn');
     const trackBtnText = document.getElementById('track-btn-text');
@@ -381,6 +405,7 @@
       }
       document.body.classList.remove('is-paired');
       updateStatus('disconnected', errorMessage || 'Signal Error');
+      if (disconnectedSection) disconnectedSection.style.display = 'none';
       if (waitingSection) waitingSection.style.display = 'none';
       if (trackingSection) trackingSection.style.display = 'none';
       if (remoteControlSection) remoteControlSection.style.display = 'none';
@@ -457,6 +482,7 @@
       connectBtn.disabled = true;
       roomInput.disabled = true;
       pairingSection.style.display = 'none';
+      if (disconnectedSection) disconnectedSection.style.display = 'none';
       if (waitingSection) waitingSection.style.display = 'flex';
       trackingSection.style.display = 'none';
       if (remoteControlSection) remoteControlSection.style.display = 'none';
@@ -496,7 +522,9 @@
             console.log('Host accepted pairing request!');
             document.body.classList.add('is-paired');
             updateStatus('connected', 'Connected');
+            if (disconnectedSection) disconnectedSection.style.display = 'none';
             if (waitingSection) waitingSection.style.display = 'none';
+            pairingSection.style.display = 'none';
             trackingSection.style.display = 'flex';
             if (remoteControlSection) remoteControlSection.style.display = 'flex';
             if (phoneDisconnectBtn) phoneDisconnectBtn.style.display = 'inline-block';
@@ -515,6 +543,14 @@
             trackingSection.style.display = 'none';
             if (remoteControlSection) remoteControlSection.style.display = 'none';
             if (phoneDisconnectBtn) phoneDisconnectBtn.style.display = 'none';
+            pairingSection.style.display = 'none';
+            if (disconnectedSection) {
+              if (disconnectedTitle) disconnectedTitle.innerText = 'Declined by Host';
+              if (disconnectedDesc) disconnectedDesc.innerText = 'Pairing request was declined by host.';
+              disconnectedSection.style.display = 'flex';
+            } else {
+              pairingSection.style.display = 'block';
+            }
             connectBtn.disabled = false;
             roomInput.disabled = false;
             deviceInfo.innerText = 'Connection request was declined by host.';
@@ -525,33 +561,54 @@
             console.log('Host disconnected session.');
             document.body.classList.remove('is-paired');
             updateStatus('disconnected', 'Disconnected');
+            stopTracking();
+            stopScreenShare();
+            stopCameraShare();
+            if (activeConn) {
+              try { activeConn.close(); } catch(e) {}
+              activeConn = null;
+            }
             if (waitingSection) waitingSection.style.display = 'none';
             trackingSection.style.display = 'none';
             if (remoteControlSection) remoteControlSection.style.display = 'none';
             if (phoneDisconnectBtn) phoneDisconnectBtn.style.display = 'none';
+            pairingSection.style.display = 'none';
+            if (disconnectedSection) {
+              if (disconnectedTitle) disconnectedTitle.innerText = 'Disconnected';
+              if (disconnectedDesc) disconnectedDesc.innerText = 'Session was disconnected by host.';
+              disconnectedSection.style.display = 'flex';
+            } else {
+              pairingSection.style.display = 'block';
+            }
             connectBtn.disabled = false;
             roomInput.disabled = false;
             deviceInfo.innerText = 'Session disconnected by host.';
-            stopTracking();
-            stopScreenShare();
-            stopCameraShare();
           }
         });
 
         activeConn.on('close', () => {
           console.log('Peer connection closed');
+          const wasPaired = document.body.classList.contains('is-paired');
           document.body.classList.remove('is-paired');
           updateStatus('disconnected', 'Disconnected');
+          stopTracking();
+          stopScreenShare();
+          stopCameraShare();
           if (waitingSection) waitingSection.style.display = 'none';
           trackingSection.style.display = 'none';
           if (remoteControlSection) remoteControlSection.style.display = 'none';
           if (phoneDisconnectBtn) phoneDisconnectBtn.style.display = 'none';
+          if (wasPaired && disconnectedSection) {
+            if (disconnectedTitle) disconnectedTitle.innerText = 'Disconnected';
+            if (disconnectedDesc) disconnectedDesc.innerText = 'Session was disconnected by host.';
+            disconnectedSection.style.display = 'flex';
+            pairingSection.style.display = 'none';
+          } else {
+            pairingSection.style.display = 'block';
+          }
           connectBtn.disabled = false;
           roomInput.disabled = false;
           deviceInfo.innerText = 'Connection lost. Try reconnecting.';
-          stopTracking();
-          stopScreenShare();
-          stopCameraShare();
         });
 
         activeConn.on('error', (err) => {
@@ -578,6 +635,7 @@
       }
       document.body.classList.remove('is-paired');
       updateStatus('disconnected', 'Cancelled');
+      if (disconnectedSection) disconnectedSection.style.display = 'none';
       if (waitingSection) waitingSection.style.display = 'none';
       pairingSection.style.display = 'block';
       trackingSection.style.display = 'none';
@@ -589,6 +647,20 @@
 
     if (cancelWaitBtn) {
       cancelWaitBtn.addEventListener('click', cancelPairRequest);
+    }
+
+    if (goToPairBtn) {
+      goToPairBtn.addEventListener('click', () => {
+        if (disconnectedSection) disconnectedSection.style.display = 'none';
+        if (waitingSection) waitingSection.style.display = 'none';
+        trackingSection.style.display = 'none';
+        if (remoteControlSection) remoteControlSection.style.display = 'none';
+        if (phoneDisconnectBtn) phoneDisconnectBtn.style.display = 'none';
+        pairingSection.style.display = 'block';
+        connectBtn.disabled = false;
+        roomInput.disabled = false;
+        updateStatus('disconnected', 'Disconnected');
+      });
     }
 
     function disconnectFromHost() {
@@ -606,6 +678,7 @@
       stopScreenShare();
       stopCameraShare();
       updateStatus('disconnected', 'Disconnected');
+      if (disconnectedSection) disconnectedSection.style.display = 'none';
       if (waitingSection) waitingSection.style.display = 'none';
       pairingSection.style.display = 'block';
       trackingSection.style.display = 'none';
