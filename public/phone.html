@@ -23,10 +23,13 @@
 
     <!-- Main Controller Card -->
     <div class="mobile-card">
-      <!-- Status Badge -->
-      <div class="status-bar" style="justify-content: center; gap: 12px;">
-        <span class="status-dot disconnected" id="status-dot"></span>
-        <span id="status-text" style="font-weight: 600;">Disconnected</span>
+      <!-- Status Badge & Disconnect Button -->
+      <div class="status-bar" style="justify-content: space-between; align-items: center; width: 100%;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span class="status-dot disconnected" id="status-dot"></span>
+          <span id="status-text" style="font-weight: 600;">Disconnected</span>
+        </div>
+        <button id="phone-disconnect-btn" class="btn-disconnect" style="display: none;" title="Disconnect from session">Disconnect</button>
       </div>
 
       <!-- Pairing Section -->
@@ -192,6 +195,7 @@
     const trackBtn = document.getElementById('track-btn');
     const trackBtnText = document.getElementById('track-btn-text');
     const phoneCalibrateBtn = document.getElementById('phone-calibrate-btn');
+    const phoneDisconnectBtn = document.getElementById('phone-disconnect-btn');
     const deviceInfo = document.getElementById('device-info');
 
     // Remote Control Elements
@@ -330,6 +334,7 @@
           pairingSection.style.display = 'none';
           trackingSection.style.display = 'none';
           if (remoteControlSection) remoteControlSection.style.display = 'none';
+          if (phoneDisconnectBtn) phoneDisconnectBtn.style.display = 'none';
           deviceInfo.innerText = 'Pairing request sent. Waiting for host to approve...';
 
           // Send pair request with device name
@@ -351,6 +356,7 @@
             pairingSection.style.display = 'none';
             trackingSection.style.display = 'flex';
             if (remoteControlSection) remoteControlSection.style.display = 'flex';
+            if (phoneDisconnectBtn) phoneDisconnectBtn.style.display = 'inline-block';
             deviceInfo.innerText = 'Connected via WebRTC. Ready to stream.';
 
             if (payload.state) {
@@ -364,6 +370,7 @@
             pairingSection.style.display = 'block';
             trackingSection.style.display = 'none';
             if (remoteControlSection) remoteControlSection.style.display = 'none';
+            if (phoneDisconnectBtn) phoneDisconnectBtn.style.display = 'none';
             connectBtn.disabled = false;
             roomInput.disabled = false;
             deviceInfo.innerText = 'Connection request was declined by host.';
@@ -376,6 +383,7 @@
             pairingSection.style.display = 'block';
             trackingSection.style.display = 'none';
             if (remoteControlSection) remoteControlSection.style.display = 'none';
+            if (phoneDisconnectBtn) phoneDisconnectBtn.style.display = 'none';
             connectBtn.disabled = false;
             roomInput.disabled = false;
             deviceInfo.innerText = 'Session disconnected by host.';
@@ -391,6 +399,7 @@
           pairingSection.style.display = 'block';
           trackingSection.style.display = 'none';
           if (remoteControlSection) remoteControlSection.style.display = 'none';
+          if (phoneDisconnectBtn) phoneDisconnectBtn.style.display = 'none';
           connectBtn.disabled = false;
           roomInput.disabled = false;
           deviceInfo.innerText = 'Connection lost. Try reconnecting.';
@@ -402,6 +411,7 @@
         activeConn.on('error', (err) => {
           console.error('DataConnection error:', err);
           updateStatus('disconnected', 'Connection Error');
+          if (phoneDisconnectBtn) phoneDisconnectBtn.style.display = 'none';
           connectBtn.disabled = false;
           roomInput.disabled = false;
         });
@@ -409,9 +419,41 @@
       } catch (e) {
         console.error('Failed to connect:', e);
         updateStatus('disconnected', 'Failed to connect');
+        if (phoneDisconnectBtn) phoneDisconnectBtn.style.display = 'none';
         connectBtn.disabled = false;
         roomInput.disabled = false;
       }
+    }
+
+    function disconnectFromHost() {
+      if (activeConn && activeConn.open) {
+        try {
+          activeConn.send({ type: 'disconnect' });
+        } catch (e) {}
+        setTimeout(() => {
+          try { activeConn.close(); } catch(e) {}
+          activeConn = null;
+        }, 60);
+      }
+      stopTracking();
+      stopScreenShare();
+      stopCameraShare();
+      updateStatus('disconnected', 'Disconnected');
+      pairingSection.style.display = 'block';
+      trackingSection.style.display = 'none';
+      if (remoteControlSection) remoteControlSection.style.display = 'none';
+      if (phoneDisconnectBtn) phoneDisconnectBtn.style.display = 'none';
+      connectBtn.disabled = false;
+      roomInput.disabled = false;
+      deviceInfo.innerText = 'You disconnected from the session.';
+    }
+
+    if (phoneDisconnectBtn) {
+      phoneDisconnectBtn.addEventListener('click', () => {
+        if (confirm('Are you sure you want to disconnect?')) {
+          disconnectFromHost();
+        }
+      });
     }
 
     // Motion Tracking Management
