@@ -19,58 +19,55 @@
 </head>
 <body>
   <div class="app-container">
-    <!-- Sidebar Control Panel -->
-    <div class="sidebar">
-      <!-- Pairing Panel -->
-      <div class="panel" id="pairing-panel">
-        <span class="panel-title">1. Mobile Pairing Connection</span>
-        <div class="pairing-code-container">
-          <span class="pairing-label">Pairing Room Code</span>
-          <span class="pairing-code" id="display-room-code">----</span>
-          <p class="subtitle">Scan QR code with your mobile device to pair:</p>
-          <div id="qrcode"></div>
-        </div>
-      </div>
-    </div>
-
     <!-- Main Viewport Canvas -->
     <div class="viewport-container">
       <div id="canvas-container"></div>
     </div>
   </div>
 
+  <!-- Floating Pairing Connection Window (Top Left) -->
+  <div class="panel floating-pairing-widget" id="pairing-panel">
+    <span class="panel-title">1. Mobile Pairing Connection</span>
+    <div class="pairing-code-container">
+      <span class="pairing-label">Pairing Room Code</span>
+      <span class="pairing-code" id="display-room-code">----</span>
+      <p class="subtitle">Scan QR code with your mobile device to pair:</p>
+      <div id="qrcode"></div>
+    </div>
+  </div>
+
   <!-- Floating Status Monitor Window (Bottom Left) -->
   <div id="status-monitor-widget" class="floating-status-widget">
     <div class="floating-status-header">
-      <div style="display: flex; align-items: center; gap: 6px;">
-        <svg style="width: 14px; height: 14px; color: var(--accent-color);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <div class="floating-header-left">
+        <svg style="width: 14px; height: 14px; color: var(--accent-color); flex-shrink: 0;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
           <path stroke-linecap="round" stroke-linejoin="round" d="M9.348 14.651a3.75 3.75 0 010-5.303m5.304 0a3.75 3.75 0 010 5.303m-7.425 2.122a6.75 6.75 0 010-9.546m9.546 0a6.75 6.75 0 010 9.546M12 12h.008v.008H12V12z"></path>
         </svg>
         <span class="floating-status-title">Status Monitor</span>
       </div>
-      <div style="display: flex; align-items: center; gap: 6px;">
-        <button id="theme-toggle" class="round-btn widget-btn" title="Toggle Staging Theme">
+      <div class="floating-header-actions">
+        <button id="theme-toggle" class="widget-btn" title="Toggle Staging Theme">
           <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"></path>
           </svg>
         </button>
-        <button id="camera-reset" class="round-btn widget-btn" title="Reset Camera View">
+        <button id="camera-reset" class="widget-btn" title="Reset Camera View">
           <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path stroke-linecap="round" stroke-linejoin="round" d="M15 15l-6 6m0 0l-3-3m3 3V9a9 9 0 1118 0v3"></path>
           </svg>
         </button>
       </div>
     </div>
-    <div class="status-bar">
-      <span>WebRTC Link:</span>
+    <div class="status-row">
+      <span class="status-label">WebRTC Link:</span>
       <div class="status-indicator">
         <span class="status-dot disconnected" id="server-status-dot"></span>
         <span id="server-status-text">Connecting...</span>
       </div>
     </div>
-    <div class="status-bar" style="display: flex; justify-content: space-between; align-items: center;">
-      <span>Mobile Device:</span>
-      <div style="display: flex; align-items: center; gap: 8px;">
+    <div class="status-row">
+      <span class="status-label">Mobile Device:</span>
+      <div class="status-val-group">
         <div class="status-indicator">
           <span class="status-dot disconnected" id="phone-status-dot"></span>
           <span id="phone-status-text">Not Paired</span>
@@ -339,10 +336,7 @@
     const sidebarElem = document.querySelector('.sidebar');
     function updatePairingVisibility(isPaired) {
       if (pairingPanel) {
-        pairingPanel.style.display = isPaired ? 'none' : 'block';
-      }
-      if (sidebarElem) {
-        sidebarElem.style.display = isPaired ? 'none' : 'flex';
+        pairingPanel.style.display = isPaired ? 'none' : 'flex';
       }
       if (typeof onWindowResize === 'function') {
         setTimeout(onWindowResize, 60);
@@ -726,7 +720,7 @@
       scene.background = new THREE.Color(0x0b0f19);
       scene.fog = new THREE.FogExp2(0x0b0f19, 0.015);
 
-      const width = container.clientWidth || (window.innerWidth - 360) || window.innerWidth;
+      const width = container.clientWidth || window.innerWidth;
       const height = container.clientHeight || window.innerHeight;
 
       // 2. Camera (Tuned near/far ratio to maximize 24-bit depth buffer precision)
@@ -2223,7 +2217,7 @@
     
     function onWindowResize() {
       if (!container || !camera || !renderer) return;
-      const width = container.clientWidth || (window.innerWidth - (sidebarElem && sidebarElem.style.display !== 'none' ? 360 : 0)) || window.innerWidth;
+      const width = container.clientWidth || window.innerWidth;
       const height = container.clientHeight || window.innerHeight;
       if (!width || !height) return;
       camera.aspect = width / height;

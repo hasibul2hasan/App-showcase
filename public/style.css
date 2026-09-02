@@ -824,12 +824,36 @@ select:focus {
   color: white;
 }
 
+/* Floating Pairing Connection Window (Top Left) */
+.floating-pairing-widget {
+  position: fixed;
+  top: 24px;
+  left: 24px;
+  z-index: 1000;
+  width: 320px;
+  max-width: calc(100vw - 48px);
+  background: var(--panel-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--panel-border);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  box-sizing: border-box;
+  transition: all var(--transition-normal);
+}
+
 /* Floating Status Monitor Window (Bottom Left) */
 .floating-status-widget {
   position: fixed;
   bottom: 24px;
   left: 24px;
   z-index: 1000;
+  width: 320px;
+  max-width: calc(100vw - 48px);
   background: var(--panel-bg);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -838,10 +862,9 @@ select:focus {
   padding: 12px 16px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
-  min-width: 250px;
-  max-width: 320px;
+  box-sizing: border-box;
   transition: all var(--transition-normal);
 }
 
@@ -849,8 +872,16 @@ select:focus {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-bottom: 6px;
+  padding-bottom: 8px;
   border-bottom: 1px solid var(--panel-border);
+  min-height: 28px;
+}
+
+.floating-header-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
 .floating-status-title {
@@ -859,6 +890,82 @@ select:focus {
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--text-secondary);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.floating-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.widget-btn {
+  width: 26px !important;
+  height: 26px !important;
+  min-width: 26px !important;
+  min-height: 26px !important;
+  border-radius: 6px !important;
+  padding: 0 !important;
+  background: var(--panel-bg) !important;
+  border: 1px solid var(--panel-border) !important;
+  color: var(--text-primary) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer;
+  box-shadow: none !important;
+  transition: all var(--transition-fast) !important;
+}
+
+.widget-btn:hover {
+  background: var(--accent-gradient) !important;
+  color: white !important;
+  border-color: transparent !important;
+  transform: translateY(-1px);
+}
+
+.floating-status-widget .status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  line-height: 1.4;
+}
+
+.floating-status-widget .status-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.floating-status-widget .status-val-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.floating-status-widget .status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  white-space: nowrap;
+  color: var(--text-primary);
+  flex-shrink: 0;
+}
+
+.floating-status-widget .btn-disconnect {
+  padding: 3px 8px;
+  font-size: 0.68rem;
+  border-radius: 5px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 /* ---------------------------------------------------- */
