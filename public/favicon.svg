@@ -1,0 +1,33 @@
+<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="m-grad-left" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#0284c7" />
+    </linearGradient>
+    <linearGradient id="m-grad-right" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f8fafc" />
+      <stop offset="100%" stop-color="#cbd5e1" />
+    </linearGradient>
+    <linearGradient id="m-grad-center" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#0369a1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Left Upright Stanchion -->
+  <polygon points="5,10 14,6 14,42 5,42" fill="url(#m-grad-left)" />
+
+  <!-- Right Upright Stanchion -->
+  <polygon points="34,6 43,10 43,42 34,42" fill="url(#m-grad-right)" />
+
+  <!-- Left Inward Faceted Fold -->
+  <polygon points="14,6 24,20 24,31 14,42" fill="url(#m-grad-center)" />
+
+  <!-- Right Inward Faceted Fold -->
+  <polygon points="24,20 34,6 34,42 24,31" fill="#94a3b8" />
+
+  <!-- Central Interlocking 3D Prism (The 'Mimiq' Core) -->
+  <polygon points="24,14 30,22 24,30 18,22" fill="#38bdf8" fill-opacity="0.35" stroke="#38bdf8" stroke-width="1.5" />
+  <!-- Center Refraction Line -->
+  <line x1="24" y1="14" x2="24" y2="30" stroke="#ffffff" stroke-width="1.5" />
+</svg>
