@@ -1749,9 +1749,11 @@
     }
 
     // ----------------------------------------------------
-    // Screen Custom Screen Textures (iOS 18/19 Next-Gen Canvas)
+    // Screen Custom Screen Textures (iPhone 18 Air Next-Gen Canvas)
     // ----------------------------------------------------
     
+    let wallpaperImg = null;
+
     // 1. Fallback dynamic iOS Clock screen setup
     function setupClockCanvas() {
       canvasElement = document.createElement('canvas');
@@ -1759,6 +1761,18 @@
       canvasElement.height = 1120;
       canvasCtx = canvasElement.getContext('2d');
       
+      if (!wallpaperImg) {
+        wallpaperImg = new Image();
+        wallpaperImg.crossOrigin = 'anonymous';
+        wallpaperImg.onload = () => {
+          if (clockCanvasTexture) {
+            clockCanvasTexture.needsUpdate = true;
+          }
+          renderClockCanvas();
+        };
+        wallpaperImg.src = '/images/iphone18air_wallpaper.jpg';
+      }
+
       clockCanvasTexture = new THREE.CanvasTexture(canvasElement);
       clockCanvasTexture.minFilter = THREE.LinearFilter;
       clockCanvasTexture.magFilter = THREE.LinearFilter;
@@ -1778,276 +1792,360 @@
       const w = canvasElement.width;
       const h = canvasElement.height;
       const timeNow = Date.now();
+      const t = timeNow / 1000;
 
-      // 1. iPhone 17 Pro Silver-Slate Fluid Aura Wallpaper (Matching Reference Image)
-      const bgGrad = canvasCtx.createLinearGradient(0, 0, w, h);
-      bgGrad.addColorStop(0, '#9bb1c8');     // Ice-blue slate top-left
-      bgGrad.addColorStop(0.3, '#748ba3');
-      bgGrad.addColorStop(0.65, '#3b4b5e');
-      bgGrad.addColorStop(1, '#151d28');      // Deep slate-charcoal bottom-right
-      canvasCtx.fillStyle = bgGrad;
-      canvasCtx.fillRect(0, 0, w, h);
+      // ========================================================
+      // 1. iPhone 18 Air "Liquid Titanium & Glass 18 Ribbon" Wallpaper
+      // ========================================================
+      if (wallpaperImg && wallpaperImg.complete && wallpaperImg.naturalWidth > 0) {
+        // Zoom in wallpaper (~20% zoom centered)
+        const zoom = 1.20;
+        const nw = wallpaperImg.naturalWidth;
+        const nh = wallpaperImg.naturalHeight;
+        const cropW = nw / zoom;
+        const cropH = nh / zoom;
+        const cropX = (nw - cropW) / 2;
+        const cropY = (nh - cropH) / 2;
+        canvasCtx.drawImage(wallpaperImg, cropX, cropY, cropW, cropH, 0, 0, w, h);
+      } else {
+        // High-contrast fallback cosmic obsidian gradient
+        const bgGrad = canvasCtx.createLinearGradient(0, 0, w * 0.8, h);
+        bgGrad.addColorStop(0, '#040711');
+        bgGrad.addColorStop(0.45, '#0a172c');
+        bgGrad.addColorStop(0.8, '#131b32');
+        bgGrad.addColorStop(1, '#02040a');
+        canvasCtx.fillStyle = bgGrad;
+        canvasCtx.fillRect(0, 0, w, h);
+      }
 
-      // Fluid sculpted organic ribbon wave contour from reference image
+      // Atmospheric Vignette (Soft top/bottom gradients for contrast)
       canvasCtx.save();
-      // Flowing dark shadow ribbon
-      canvasCtx.fillStyle = '#111822';
-      canvasCtx.beginPath();
-      canvasCtx.moveTo(w * 0.15, 0);
-      canvasCtx.bezierCurveTo(w * 0.5, h * 0.25, w * 0.95, h * 0.45, w * 0.85, h * 0.65);
-      canvasCtx.bezierCurveTo(w * 0.75, h * 0.82, w * 0.35, h * 0.92, w * 0.45, h);
-      canvasCtx.lineTo(0, h);
-      canvasCtx.lineTo(0, 0);
-      canvasCtx.closePath();
-      canvasCtx.fill();
+      const topGrad = canvasCtx.createLinearGradient(0, 0, 0, 180);
+      topGrad.addColorStop(0, 'rgba(0, 0, 0, 0.45)');
+      topGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      canvasCtx.fillStyle = topGrad;
+      canvasCtx.fillRect(0, 0, w, 180);
 
-      // Soft ambient light wave glow
-      const fluidGrad = canvasCtx.createRadialGradient(w * 0.35, h * 0.72, 30, w * 0.35, h * 0.72, 280);
-      fluidGrad.addColorStop(0, 'rgba(186, 215, 242, 0.9)');
-      fluidGrad.addColorStop(0.5, 'rgba(147, 180, 211, 0.5)');
-      fluidGrad.addColorStop(1, 'rgba(30, 41, 59, 0)');
-      canvasCtx.fillStyle = fluidGrad;
-      canvasCtx.beginPath();
-      canvasCtx.arc(w * 0.35, h * 0.72, 280, 0, Math.PI * 2);
-      canvasCtx.fill();
+      const botGrad = canvasCtx.createLinearGradient(0, h - 220, 0, h);
+      botGrad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+      botGrad.addColorStop(1, 'rgba(0, 0, 0, 0.55)');
+      canvasCtx.fillStyle = botGrad;
+      canvasCtx.fillRect(0, h - 220, w, 220);
 
-      // Sweeping luminous silver curve contour
-      canvasCtx.lineWidth = 12;
-      canvasCtx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
-      canvasCtx.beginPath();
-      canvasCtx.moveTo(w * 0.15, 0);
-      canvasCtx.bezierCurveTo(w * 0.5, h * 0.25, w * 0.95, h * 0.45, w * 0.85, h * 0.65);
-      canvasCtx.bezierCurveTo(w * 0.75, h * 0.82, w * 0.35, h * 0.92, w * 0.45, h);
-      canvasCtx.stroke();
+      // ========================================================
+      // 2. Apple Intelligence Glow Aura (iOS 18/19+ Perimeter Radiance)
+      // ========================================================
+      const auraAlpha = 0.28 + Math.sin(t * 1.6) * 0.12;
+      const edgeGrad = canvasCtx.createLinearGradient(0, 0, w, h);
+      edgeGrad.addColorStop(0, `rgba(56, 189, 248, ${auraAlpha})`);
+      edgeGrad.addColorStop(0.35, `rgba(168, 85, 247, ${auraAlpha * 0.9})`);
+      edgeGrad.addColorStop(0.7, `rgba(244, 114, 182, ${auraAlpha * 0.85})`);
+      edgeGrad.addColorStop(1, `rgba(56, 189, 248, ${auraAlpha})`);
+      canvasCtx.lineWidth = 3.5;
+      canvasCtx.strokeStyle = edgeGrad;
+      canvasCtx.strokeRect(3, 3, w - 6, h - 6);
       canvasCtx.restore();
 
-      // 2. iOS Status Bar
+      // ========================================================
+      // 3. iOS 18/19 Next-Gen Status Bar
+      // ========================================================
       const now = new Date();
       const hours = now.getHours().toString().padStart(2, '0');
       const minutes = now.getMinutes().toString().padStart(2, '0');
-      const seconds = now.getSeconds().toString().padStart(2, '0');
       const timeShort = `${hours}:${minutes}`;
-      const timeFull = `${hours}:${minutes}:${seconds}`;
       const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
 
       // Left: Current Time
       canvasCtx.fillStyle = '#ffffff';
-      canvasCtx.font = '600 20px -apple-system, BlinkMacSystemFont, "Inter", sans-serif';
+      canvasCtx.font = '600 19px -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif';
       canvasCtx.textAlign = 'left';
-      canvasCtx.fillText(timeShort, 42, 45);
+      canvasCtx.fillText(timeShort, 42, 44);
 
-      // Right: Signal, 5G, Wi-Fi & Battery Capsule
-      // 4 Signal Bars
+      // Right: Minimalist Signal, 5G Air, Wi-Fi & Battery Capsule
+      // 4 Cellular Bars
       canvasCtx.fillStyle = '#ffffff';
       for (let i = 0; i < 4; i++) {
         const barH = 5 + i * 3;
-        canvasCtx.fillRect(w - 145 + i * 5, 45 - barH, 3, barH);
+        canvasCtx.fillRect(w - 156 + i * 5, 44 - barH, 3, barH);
       }
 
-      // 5G Icon
-      canvasCtx.font = '700 13px -apple-system, BlinkMacSystemFont, "Inter", sans-serif';
-      canvasCtx.fillText('5G', w - 120, 45);
+      // 5G Air Text
+      canvasCtx.font = '700 11px -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif';
+      canvasCtx.fillText('5G', w - 130, 43);
 
-      // Battery Capsule
-      const batX = w - 80;
+      // Wi-Fi 3-Tier Waves
+      canvasCtx.lineWidth = 1.6;
+      canvasCtx.strokeStyle = '#ffffff';
+      canvasCtx.beginPath();
+      canvasCtx.arc(w - 100, 42, 9, Math.PI * 1.25, Math.PI * 1.75);
+      canvasCtx.stroke();
+      canvasCtx.beginPath();
+      canvasCtx.arc(w - 100, 42, 5.5, Math.PI * 1.25, Math.PI * 1.75);
+      canvasCtx.stroke();
+      canvasCtx.fillStyle = '#ffffff';
+      canvasCtx.beginPath();
+      canvasCtx.arc(w - 100, 42, 1.8, 0, Math.PI * 2);
+      canvasCtx.fill();
+
+      // Battery Capsule (100% Emerald Green)
+      const batX = w - 74;
       const batY = 32;
-      canvasCtx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+      canvasCtx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
       canvasCtx.lineWidth = 1.5;
       canvasCtx.beginPath();
-      canvasCtx.roundRect(batX, batY, 34, 16, 4);
+      canvasCtx.roundRect(batX, batY, 32, 15, 4);
       canvasCtx.stroke();
       // Battery nub
-      canvasCtx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-      canvasCtx.fillRect(batX + 35, batY + 4, 2, 8);
-      // Battery charge fill (88%)
-      canvasCtx.fillStyle = '#22c55e'; // Vibrant Apple Green
+      canvasCtx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+      canvasCtx.fillRect(batX + 33, batY + 4, 2, 7);
+      // Battery charge fill
+      canvasCtx.fillStyle = '#34d399';
       canvasCtx.beginPath();
-      canvasCtx.roundRect(batX + 2, batY + 2, 26, 12, 2);
+      canvasCtx.roundRect(batX + 2, batY + 2, 27, 11, 2);
       canvasCtx.fill();
-      // Battery text inside
-      canvasCtx.fillStyle = '#000000';
-      canvasCtx.font = 'bold 9px -apple-system, BlinkMacSystemFont, "Inter", sans-serif';
+      // Battery percentage
+      canvasCtx.fillStyle = '#03120e';
+      canvasCtx.font = 'bold 8.5px -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif';
       canvasCtx.textAlign = 'center';
-      canvasCtx.fillText('88', batX + 15, batY + 11);
+      canvasCtx.fillText('100', batX + 15, batY + 10);
 
-      // 3. Dynamic Island Live Activity (Compact interactive status at top)
-      const diW = 210;
-      const diH = 40;
+      // ========================================================
+      // 4. iPhone 18 Air Sleek Dynamic Island Pill
+      // ========================================================
+      const diW = 164;
+      const diH = 32;
       const diX = (w - diW) / 2;
-      const diY = 16;
+      const diY = 18;
+
       canvasCtx.fillStyle = '#000000';
       canvasCtx.beginPath();
       canvasCtx.roundRect(diX, diY, diW, diH, diH / 2);
       canvasCtx.fill();
-      canvasCtx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+      canvasCtx.strokeStyle = 'rgba(255, 255, 255, 0.16)';
       canvasCtx.lineWidth = 1;
       canvasCtx.stroke();
 
-      // Mini animated audio equalizer in Dynamic Island (left side)
+      // FaceTime Camera Lens Reflex Dot (Left inside island)
+      canvasCtx.fillStyle = '#1e1b4b';
+      canvasCtx.beginPath();
+      canvasCtx.arc(diX + 18, diY + diH / 2, 5, 0, Math.PI * 2);
+      canvasCtx.fill();
       canvasCtx.fillStyle = '#38bdf8';
-      for (let i = 0; i < 4; i++) {
-        const hVal = 6 + Math.abs(Math.sin((timeNow / 200) + i * 1.2)) * 14;
-        canvasCtx.beginPath();
-        canvasCtx.roundRect(diX + 18 + i * 6, diY + diH/2 - hVal/2, 3, hVal, 1.5);
-        canvasCtx.fill();
-      }
-
-      // Center title in Dynamic Island
-      canvasCtx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-      canvasCtx.font = '600 12px -apple-system, BlinkMacSystemFont, "Inter", sans-serif';
-      canvasCtx.textAlign = 'center';
-      canvasCtx.fillText('Live Activity', diX + diW/2, diY + diH/2 + 4);
-
-      // Mini album thumbnail on right side of Dynamic Island
-      const miniAlbGrad = canvasCtx.createLinearGradient(diX + diW - 36, diY + 8, diX + diW - 12, diY + 32);
-      miniAlbGrad.addColorStop(0, '#38bdf8');
-      miniAlbGrad.addColorStop(1, '#6366f1');
-      canvasCtx.fillStyle = miniAlbGrad;
       canvasCtx.beginPath();
-      canvasCtx.roundRect(diX + diW - 36, diY + 8, 24, 24, 6);
+      canvasCtx.arc(diX + 17, diY + diH / 2 - 1.5, 1.5, 0, Math.PI * 2);
       canvasCtx.fill();
 
-      // 4. Next-Gen iOS 18/19 Depth Clock
-      // Lock Screen Date
-      canvasCtx.fillStyle = 'rgba(241, 245, 249, 0.9)';
-      canvasCtx.font = '600 24px -apple-system, BlinkMacSystemFont, "Inter", sans-serif';
-      canvasCtx.textAlign = 'center';
-      canvasCtx.fillText(dateStr, w/2, 175);
+      // Right: Dynamic privacy glow indicator or mini live activity wave
+      canvasCtx.fillStyle = '#22c55e';
+      canvasCtx.beginPath();
+      canvasCtx.arc(diX + diW - 16, diY + diH / 2, 2.5, 0, Math.PI * 2);
+      canvasCtx.fill();
 
-      // Large iOS Clock Display
-      canvasCtx.fillStyle = '#ffffff';
-      canvasCtx.font = '700 88px -apple-system, BlinkMacSystemFont, "Inter", sans-serif';
-      canvasCtx.shadowColor = 'rgba(15, 23, 42, 0.5)';
-      canvasCtx.shadowBlur = 18;
-      canvasCtx.fillText(timeShort, w/2, 270);
-      canvasCtx.shadowBlur = 0; // Reset shadow
-
-      // 5. Glassmorphic Apple Music Live Activity Widget Card
-      const cardX = 32;
-      const cardY = 560;
-      const cardW = 448;
-      const cardH = 175;
-      const cardR = 24;
-
-      // Card Frosted Glass Background
+      // ========================================================
+      // 5. Lock Screen Date, Lock Glyph & Ultra-Depth Clock
+      // ========================================================
+      // Vector Face ID Padlock (Centered above date)
+      const lockX = w / 2;
+      const lockY = 104;
       canvasCtx.save();
-      canvasCtx.fillStyle = 'rgba(15, 23, 42, 0.72)';
+      canvasCtx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+      canvasCtx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+      canvasCtx.lineWidth = 1.8;
+      // Padlock shackle
       canvasCtx.beginPath();
-      canvasCtx.roundRect(cardX, cardY, cardW, cardH, cardR);
-      canvasCtx.fill();
-      canvasCtx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
-      canvasCtx.lineWidth = 1.5;
+      canvasCtx.arc(lockX, lockY - 1, 5, Math.PI, 0);
       canvasCtx.stroke();
-
-      // Album Art Cover
-      const albX = cardX + 20;
-      const albY = cardY + 20;
-      const albSize = 75;
-      const albGrad = canvasCtx.createLinearGradient(albX, albY, albX + albSize, albY + albSize);
-      albGrad.addColorStop(0, '#38bdf8');
-      albGrad.addColorStop(0.5, '#6366f1');
-      albGrad.addColorStop(1, '#a855f7');
-      canvasCtx.fillStyle = albGrad;
+      // Padlock body
       canvasCtx.beginPath();
-      canvasCtx.roundRect(albX, albY, albSize, albSize, 14);
+      canvasCtx.roundRect(lockX - 6, lockY, 12, 10, 2);
       canvasCtx.fill();
-
-      // Music Icon Inside Album Art
-      canvasCtx.fillStyle = '#ffffff';
-      canvasCtx.font = '32px Arial';
-      canvasCtx.textAlign = 'center';
-      canvasCtx.fillText('🎵', albX + albSize/2, albY + albSize/2 + 12);
-
-      // Song Title & Artist
-      canvasCtx.fillStyle = '#ffffff';
-      canvasCtx.font = 'bold 20px -apple-system, BlinkMacSystemFont, "Inter", sans-serif';
-      canvasCtx.textAlign = 'left';
-      canvasCtx.fillText('Aura Titanium', albX + albSize + 18, albY + 28);
-
-      canvasCtx.fillStyle = 'rgba(203, 213, 225, 0.85)';
-      canvasCtx.font = '500 14px -apple-system, BlinkMacSystemFont, "Inter", sans-serif';
-      canvasCtx.fillText('iPhone 17 Pro • Spatial Audio', albX + albSize + 18, albY + 52);
-
-      // Live Animated Equalizer Bars in Card
-      const eqStartX = cardX + cardW - 70;
-      for (let i = 0; i < 5; i++) {
-        const barHeight = 8 + Math.abs(Math.sin((timeNow / 160) + i * 0.9)) * 24;
-        canvasCtx.fillStyle = '#38bdf8';
-        canvasCtx.beginPath();
-        canvasCtx.roundRect(eqStartX + i * 8, albY + 45 - barHeight/2, 4, barHeight, 2);
-        canvasCtx.fill();
-      }
-
-      // Track Progress Bar
-      const progX = albX;
-      const progY = cardY + 115;
-      const progW = cardW - 40;
-      canvasCtx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+      // Padlock keyhole
+      canvasCtx.fillStyle = '#000000';
       canvasCtx.beginPath();
-      canvasCtx.roundRect(progX, progY, progW, 4, 2);
+      canvasCtx.arc(lockX, lockY + 4, 1.5, 0, Math.PI * 2);
       canvasCtx.fill();
-
-      // Progress Fill (42%)
-      const filledW = progW * 0.42;
-      canvasCtx.fillStyle = '#ffffff';
-      canvasCtx.beginPath();
-      canvasCtx.roundRect(progX, progY, filledW, 4, 2);
-      canvasCtx.fill();
-      // Progress Knob
-      canvasCtx.beginPath();
-      canvasCtx.arc(progX + filledW, progY + 2, 5, 0, Math.PI * 2);
-      canvasCtx.fill();
-
-      // Timestamps & Controls
-      canvasCtx.fillStyle = 'rgba(148, 163, 184, 0.9)';
-      canvasCtx.font = '500 12px -apple-system, BlinkMacSystemFont, "Inter", sans-serif';
-      canvasCtx.fillText('1:42', progX, progY + 20);
-      canvasCtx.textAlign = 'right';
-      canvasCtx.fillText('-2:38', progX + progW, progY + 20);
-
-      // Controls (Previous, Play, Next)
-      canvasCtx.textAlign = 'center';
-      canvasCtx.fillStyle = '#ffffff';
-      canvasCtx.font = '22px Arial';
-      canvasCtx.fillText('⏮', cardX + cardW/2 - 50, progY + 28);
-      canvasCtx.font = '26px Arial';
-      canvasCtx.fillText('⏸', cardX + cardW/2, progY + 28);
-      canvasCtx.font = '22px Arial';
-      canvasCtx.fillText('⏭', cardX + cardW/2 + 50, progY + 28);
       canvasCtx.restore();
 
-      // 6. Quick Action Lockscreen Buttons (Flashlight & Camera)
-      // Flashlight Button (Bottom Left)
-      const flashBtnX = 64;
-      const flashBtnY = h - 130;
-      const btnRadius = 30;
-      canvasCtx.fillStyle = 'rgba(255, 255, 255, 0.15)';
-      canvasCtx.beginPath();
-      canvasCtx.arc(flashBtnX, flashBtnY, btnRadius, 0, Math.PI * 2);
-      canvasCtx.fill();
-      canvasCtx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
-      canvasCtx.lineWidth = 1;
-      canvasCtx.stroke();
-      canvasCtx.font = '24px Arial';
+      // Lock Screen Date Header
+      canvasCtx.fillStyle = 'rgba(241, 245, 249, 0.95)';
+      canvasCtx.font = '600 19px -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif';
       canvasCtx.textAlign = 'center';
-      canvasCtx.fillText('🔦', flashBtnX, flashBtnY + 8);
+      canvasCtx.fillText(dateStr.toUpperCase(), w / 2, 142);
 
-      // Camera Button (Bottom Right)
-      const camBtnX = w - 64;
-      const camBtnY = h - 130;
-      canvasCtx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+      // Complication Pill (Weather & Airdrop / Spatial Link)
+      const compW = 280;
+      const compH = 24;
+      const compX = (w - compW) / 2;
+      const compY = 158;
+      canvasCtx.fillStyle = 'rgba(255, 255, 255, 0.12)';
       canvasCtx.beginPath();
-      canvasCtx.arc(camBtnX, camBtnY, btnRadius, 0, Math.PI * 2);
+      canvasCtx.roundRect(compX, compY, compW, compH, 12);
       canvasCtx.fill();
-      canvasCtx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
-      canvasCtx.stroke();
-      canvasCtx.font = '24px Arial';
-      canvasCtx.fillText('📷', camBtnX, camBtnY + 8);
+      canvasCtx.fillStyle = '#ffffff';
+      canvasCtx.font = '500 12px -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif';
+      canvasCtx.textAlign = 'center';
+      canvasCtx.fillText('24° Mostly Clear • iPhone 18 Air Spatial Link', w / 2, compY + 16);
 
-      // 7. Home Indicator Swipe Bar
-      canvasCtx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+      // Iconic Large Apple Lockscreen Typography Clock
+      canvasCtx.save();
+      canvasCtx.fillStyle = '#ffffff';
+      canvasCtx.font = '700 102px -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif';
+      canvasCtx.textAlign = 'center';
+      canvasCtx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+      canvasCtx.shadowBlur = 20;
+      canvasCtx.fillText(timeShort, w / 2, 282);
+      canvasCtx.restore();
+
+      // ========================================================
+      // 6. Floating Compact Apple Live Activity Pill (Sleek, Doesn't Block Wallpaper!)
+      // ========================================================
+      const actW = 432;
+      const actH = 68;
+      const actX = (w - actW) / 2;
+      const actY = 780;
+
+      canvasCtx.save();
+      // Frosted Glass Capsule
+      canvasCtx.fillStyle = 'rgba(10, 15, 28, 0.72)';
       canvasCtx.beginPath();
-      canvasCtx.roundRect(w/2 - 75, h - 35, 150, 5, 2.5);
+      canvasCtx.roundRect(actX, actY, actW, actH, 20);
+      canvasCtx.fill();
+      canvasCtx.strokeStyle = 'rgba(255, 255, 255, 0.16)';
+      canvasCtx.lineWidth = 1.2;
+      canvasCtx.stroke();
+
+      // Mini Vector Album Cover Box
+      const covX = actX + 12;
+      const covY = actY + 12;
+      const covSize = 44;
+      const covGrad = canvasCtx.createLinearGradient(covX, covY, covX + covSize, covY + covSize);
+      covGrad.addColorStop(0, '#0284c7');
+      covGrad.addColorStop(0.5, '#6366f1');
+      covGrad.addColorStop(1, '#a855f7');
+      canvasCtx.fillStyle = covGrad;
+      canvasCtx.beginPath();
+      canvasCtx.roundRect(covX, covY, covSize, covSize, 10);
+      canvasCtx.fill();
+
+      // Mini vector soundwave inside album box
+      canvasCtx.strokeStyle = '#ffffff';
+      canvasCtx.lineWidth = 2;
+      canvasCtx.lineCap = 'round';
+      canvasCtx.beginPath();
+      canvasCtx.moveTo(covX + 14, covY + 22);
+      canvasCtx.lineTo(covX + 14, covY + 22);
+      canvasCtx.moveTo(covX + 19, covY + 16);
+      canvasCtx.lineTo(covX + 19, covY + 28);
+      canvasCtx.moveTo(covX + 24, covY + 11);
+      canvasCtx.lineTo(covX + 24, covY + 33);
+      canvasCtx.moveTo(covX + 29, covY + 17);
+      canvasCtx.lineTo(covX + 29, covY + 27);
+      canvasCtx.stroke();
+
+      // Live Activity Text
+      canvasCtx.fillStyle = '#ffffff';
+      canvasCtx.font = '700 15px -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif';
+      canvasCtx.textAlign = 'left';
+      canvasCtx.fillText('Atmospheric Air • Spatial Audio', covX + covSize + 14, actY + 28);
+
+      canvasCtx.fillStyle = '#38bdf8';
+      canvasCtx.font = '500 11.5px -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif';
+      canvasCtx.fillText('iPhone 18 Air Studio • Lossless Stream', covX + covSize + 14, actY + 48);
+
+      // Real-time Animated Frequency Equalizer (Right side)
+      const eqX = actX + actW - 68;
+      for (let i = 0; i < 5; i++) {
+        const bH = 6 + Math.abs(Math.sin(t * 4.2 + i * 0.9)) * 18;
+        canvasCtx.fillStyle = '#38bdf8';
+        canvasCtx.beginPath();
+        canvasCtx.roundRect(eqX + i * 6, actY + actH / 2 - bH / 2, 3, bH, 1.5);
+        canvasCtx.fill();
+      }
+
+      // Play/Pause Vector Icon
+      canvasCtx.fillStyle = '#ffffff';
+      canvasCtx.beginPath();
+      canvasCtx.roundRect(actX + actW - 28, actY + actH / 2 - 8, 3.5, 16, 1.5);
+      canvasCtx.roundRect(actX + actW - 21, actY + actH / 2 - 8, 3.5, 16, 1.5);
+      canvasCtx.fill();
+      canvasCtx.restore();
+
+      // ========================================================
+      // 7. Vector Quick Action Buttons (Flashlight & Camera - No Emojis!)
+      // ========================================================
+      const btnRadius = 28;
+      const btnY = h - 110;
+
+      // 7A. Flashlight Button (Bottom Left)
+      const flashX = 64;
+      canvasCtx.fillStyle = 'rgba(15, 23, 42, 0.65)';
+      canvasCtx.beginPath();
+      canvasCtx.arc(flashX, btnY, btnRadius, 0, Math.PI * 2);
+      canvasCtx.fill();
+      canvasCtx.strokeStyle = 'rgba(255, 255, 255, 0.24)';
+      canvasCtx.lineWidth = 1.2;
+      canvasCtx.stroke();
+
+      // Vector Flashlight Drawing
+      canvasCtx.save();
+      canvasCtx.strokeStyle = '#ffffff';
+      canvasCtx.fillStyle = '#ffffff';
+      canvasCtx.lineWidth = 1.8;
+      canvasCtx.lineCap = 'round';
+      // Head
+      canvasCtx.beginPath();
+      canvasCtx.moveTo(flashX - 7, btnY - 9);
+      canvasCtx.lineTo(flashX + 7, btnY - 9);
+      canvasCtx.lineTo(flashX + 4, btnY - 2);
+      canvasCtx.lineTo(flashX - 4, btnY - 2);
+      canvasCtx.closePath();
+      canvasCtx.stroke();
+      // Body
+      canvasCtx.beginPath();
+      canvasCtx.roundRect(flashX - 4, btnY - 2, 8, 14, 2);
+      canvasCtx.stroke();
+      // Button switch
+      canvasCtx.fillRect(flashX - 1.5, btnY + 2, 3, 3);
+      canvasCtx.restore();
+
+      // 7B. Camera Button (Bottom Right)
+      const camX = w - 64;
+      canvasCtx.fillStyle = 'rgba(15, 23, 42, 0.65)';
+      canvasCtx.beginPath();
+      canvasCtx.arc(camX, btnY, btnRadius, 0, Math.PI * 2);
+      canvasCtx.fill();
+      canvasCtx.strokeStyle = 'rgba(255, 255, 255, 0.24)';
+      canvasCtx.lineWidth = 1.2;
+      canvasCtx.stroke();
+
+      // Vector Camera Drawing
+      canvasCtx.save();
+      canvasCtx.strokeStyle = '#ffffff';
+      canvasCtx.lineWidth = 1.8;
+      canvasCtx.lineCap = 'round';
+      // Body
+      canvasCtx.beginPath();
+      canvasCtx.roundRect(camX - 11, btnY - 7, 22, 16, 3);
+      canvasCtx.stroke();
+      // Top shutter bump
+      canvasCtx.beginPath();
+      canvasCtx.moveTo(camX - 5, btnY - 7);
+      canvasCtx.lineTo(camX - 2, btnY - 10);
+      canvasCtx.lineTo(camX + 2, btnY - 10);
+      canvasCtx.lineTo(camX + 5, btnY - 7);
+      canvasCtx.stroke();
+      // Lens circle
+      canvasCtx.beginPath();
+      canvasCtx.arc(camX, btnY + 1, 4.5, 0, Math.PI * 2);
+      canvasCtx.stroke();
+      canvasCtx.restore();
+
+      // ========================================================
+      // 8. Home Indicator Swipe Bar
+      // ========================================================
+      canvasCtx.fillStyle = 'rgba(255, 255, 255, 0.88)';
+      canvasCtx.beginPath();
+      canvasCtx.roundRect(w / 2 - 75, h - 30, 150, 4.5, 2.25);
       canvasCtx.fill();
 
       // Trigger WebGL update
