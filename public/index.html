@@ -35,16 +35,6 @@
   <div class="app-container">
     <!-- Sidebar Control Panel -->
     <div class="sidebar">
-      <div class="header">
-        <div class="logo">
-          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3"></path>
-          </svg>
-          <span>OMGMimiq</span>
-        </div>
-        <p class="subtitle">Interactive 3D phone mockup synced via WebRTC P2P</p>
-      </div>
-
       <!-- Pairing Panel -->
       <div class="panel" id="pairing-panel">
         <span class="panel-title">1. Mobile Pairing Connection</span>
@@ -56,170 +46,53 @@
         </div>
       </div>
 
-      <!-- Connection Status Panel -->
-      <div class="panel">
-        <span class="panel-title">Status Monitor</span>
-        <div class="status-bar">
-          <span>WebRTC Link:</span>
-          <div class="status-indicator">
-            <span class="status-dot disconnected" id="server-status-dot"></span>
-            <span id="server-status-text">Connecting...</span>
-          </div>
-        </div>
-        <div class="status-bar" style="display: flex; justify-content: space-between; align-items: center;">
-          <span>Mobile Device:</span>
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <div class="status-indicator">
-              <span class="status-dot disconnected" id="phone-status-dot"></span>
-              <span id="phone-status-text">Not Paired</span>
-            </div>
-            <button id="disconnect-device-btn" class="btn-disconnect" title="Disconnect device">Disconnect</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Screen Source Settings -->
-      <div class="panel">
-        <span class="panel-title">2. Screen Presentation Source</span>
-        
-        <div class="control-group">
-          <label class="control-label">Source Type</label>
-          <select id="screen-source-select">
-            <option value="clock">iOS 18/19 Pro Dynamic Screen</option>
-            <option value="image">Custom Screenshot (.png/.jpg)</option>
-            <option value="video">Custom Demo Video (.mp4)</option>
-            <option value="mirror">WebRTC Mirror (From Mobile Browser)</option>
-            <option value="window">Desktop Window Share (scrcpy / Simulator)</option>
-          </select>
-        </div>
-
-        <!-- Custom Image Upload -->
-        <div class="control-group" id="image-upload-group" style="display: none;">
-          <label class="control-label">Upload Screenshot</label>
-          <div class="btn btn-secondary file-upload-btn">
-            <span>Choose Image...</span>
-            <input type="file" id="image-file-input" accept="image/*">
-          </div>
-          <span class="subtitle" id="image-file-name" style="text-align: center;">No file chosen</span>
-        </div>
-
-        <!-- Custom Video Upload -->
-        <div class="control-group" id="video-upload-group" style="display: none;">
-          <label class="control-label">Upload Demo Video</label>
-          <div class="btn btn-secondary file-upload-btn">
-            <span>Choose Video...</span>
-            <input type="file" id="video-file-input" accept="video/mp4,video/webm">
-          </div>
-          <span class="subtitle" id="video-file-name" style="text-align: center;">No file chosen</span>
-        </div>
-      </div>
-
-      <!-- Motion Configuration -->
-      <div class="panel">
-        <span class="panel-title">3. Motion Sync Settings</span>
-        
-        <!-- Sensitivity Slider -->
-        <div class="control-group">
-          <div class="control-label">
-            <span>Rotation Sensitivity</span>
-            <span class="control-value" id="sensitivity-value">1.0x</span>
-          </div>
-          <input type="range" id="sensitivity-slider" min="0.2" max="2.5" step="0.1" value="1.0">
-        </div>
-
-        <!-- Damping Slider -->
-        <div class="control-group">
-          <div class="control-label">
-            <span>Smoothing Damping</span>
-            <span class="control-value" id="damping-value">0.15</span>
-          </div>
-          <input type="range" id="damping-slider" min="0.01" max="0.5" step="0.01" value="0.15">
-        </div>
-
-        <!-- Axis Inversions -->
-        <div class="control-group">
-          <div class="toggle-wrapper">
-            <span class="control-label" style="margin: 0;">Invert Pitch (X-Axis)</span>
-            <label class="switch">
-              <input type="checkbox" id="invert-pitch-checkbox">
-              <span class="slider-round"></span>
-            </label>
-          </div>
-        </div>
-
-        <div class="control-group">
-          <div class="toggle-wrapper">
-            <span class="control-label" style="margin: 0;">Invert Roll (Y-Axis)</span>
-            <label class="switch">
-              <input type="checkbox" id="invert-roll-checkbox">
-              <span class="slider-round"></span>
-            </label>
-          </div>
-        </div>
-
-        <div class="control-group">
-          <div class="toggle-wrapper">
-            <span class="control-label" style="margin: 0;">Invert Yaw (Z-Axis)</span>
-            <label class="switch">
-              <input type="checkbox" id="invert-yaw-checkbox">
-              <span class="slider-round"></span>
-            </label>
-          </div>
-        </div>
-
-        <button id="calibrate-btn" class="btn btn-secondary" style="margin-top: 6px;">
-          <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"></path>
-          </svg>
-          Reset Orientation Offset
-        </button>
-      </div>
-
-      <!-- Environment & Finish Customizer -->
-      <div class="panel">
-        <span class="panel-title">4. iPhone 17 Pro Finish & Staging</span>
-        
-        <div class="control-group">
-          <label class="control-label">Titanium Finish</label>
-          <div class="finish-swatches" id="titanium-finish-picker">
-            <div class="finish-chip active" data-finish="natural" title="Natural Titanium">
-              <div class="finish-dot" style="background: linear-gradient(135deg, #a8a49d, #78746e);"></div>
-              <span>Natural</span>
-            </div>
-            <div class="finish-chip" data-finish="desert" title="Desert Titanium">
-              <div class="finish-dot" style="background: linear-gradient(135deg, #cfb799, #9e8568);"></div>
-              <span>Desert</span>
-            </div>
-            <div class="finish-chip" data-finish="black" title="Black Titanium">
-              <div class="finish-dot" style="background: linear-gradient(135deg, #3d3e42, #1c1d20);"></div>
-              <span>Black</span>
-            </div>
-            <div class="finish-chip" data-finish="teal" title="Deep Teal Titanium">
-              <div class="finish-dot" style="background: linear-gradient(135deg, #385661, #18272d);"></div>
-              <span>Teal</span>
-            </div>
-            <div class="finish-chip" data-finish="white" title="White Titanium">
-              <div class="finish-dot" style="background: linear-gradient(135deg, #f0f2f5, #b8bac0);"></div>
-              <span>White</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="control-group" style="margin-top: 6px;">
-          <label class="control-label">Studio Background Style</label>
-          <select id="bg-preset-select">
-            <option value="dark-slate">Deep Slate Gradient (Default)</option>
-            <option value="cyberpunk">Cyberpunk Neon Ambient</option>
-            <option value="minimal-light">Studio Soft Light</option>
-            <option value="pure-black">OLED Pure Black</option>
-          </select>
-        </div>
       </div>
     </div>
 
     <!-- Main Viewport Canvas -->
     <div class="viewport-container">
       <div id="canvas-container"></div>
+    </div>
+  </div>
+
+  <!-- Floating Status Monitor Window (Bottom Left) -->
+  <div id="status-monitor-widget" class="floating-status-widget">
+    <div class="floating-status-header">
+      <div style="display: flex; align-items: center; gap: 6px;">
+        <svg style="width: 14px; height: 14px; color: var(--accent-color);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.348 14.651a3.75 3.75 0 010-5.303m5.304 0a3.75 3.75 0 010 5.303m-7.425 2.122a6.75 6.75 0 010-9.546m9.546 0a6.75 6.75 0 010 9.546M12 12h.008v.008H12V12z"></path>
+        </svg>
+        <span class="floating-status-title">Status Monitor</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 6px;">
+        <button id="theme-toggle" class="round-btn widget-btn" title="Toggle Staging Theme">
+          <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"></path>
+          </svg>
+        </button>
+        <button id="camera-reset" class="round-btn widget-btn" title="Reset Camera View">
+          <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 15l-6 6m0 0l-3-3m3 3V9a9 9 0 1118 0v3"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <div class="status-bar">
+      <span>WebRTC Link:</span>
+      <div class="status-indicator">
+        <span class="status-dot disconnected" id="server-status-dot"></span>
+        <span id="server-status-text">Connecting...</span>
+      </div>
+    </div>
+    <div class="status-bar" style="display: flex; justify-content: space-between; align-items: center;">
+      <span>Mobile Device:</span>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <div class="status-indicator">
+          <span class="status-dot disconnected" id="phone-status-dot"></span>
+          <span id="phone-status-text">Not Paired</span>
+        </div>
+        <button id="disconnect-device-btn" class="btn-disconnect" title="Disconnect device">Disconnect</button>
+      </div>
     </div>
   </div>
 
@@ -356,68 +229,85 @@
     const videoFileInput = document.getElementById('video-file-input');
     const videoFileName = document.getElementById('video-file-name');
 
-    // Sync config state
-    sensitivitySlider.addEventListener('input', (e) => {
-      config.sensitivity = parseFloat(e.target.value);
-      sensitivityValue.innerText = config.sensitivity.toFixed(1) + 'x';
-    });
+    let currentStagingPreset = 'dark-slate';
 
-    dampingSlider.addEventListener('input', (e) => {
-      config.damping = parseFloat(e.target.value);
-      dampingValue.innerText = config.damping.toFixed(2);
-    });
+    // Sync config state (if sliders present)
+    if (sensitivitySlider) {
+      sensitivitySlider.addEventListener('input', (e) => {
+        config.sensitivity = parseFloat(e.target.value);
+        if (sensitivityValue) sensitivityValue.innerText = config.sensitivity.toFixed(1) + 'x';
+      });
+    }
 
-    invertPitch.addEventListener('change', (e) => config.invertPitch = e.target.checked);
-    invertRoll.addEventListener('change', (e) => config.invertRoll = e.target.checked);
-    invertYaw.addEventListener('change', (e) => config.invertYaw = e.target.checked);
+    if (dampingSlider) {
+      dampingSlider.addEventListener('input', (e) => {
+        config.damping = parseFloat(e.target.value);
+        if (dampingValue) dampingValue.innerText = config.damping.toFixed(2);
+      });
+    }
 
-    calibrateBtn.addEventListener('click', () => {
-      calibration.isSet = false; // Trigger recalibration on next frame
-      console.log('Recalibration queued.');
-    });
+    if (invertPitch) invertPitch.addEventListener('change', (e) => config.invertPitch = e.target.checked);
+    if (invertRoll) invertRoll.addEventListener('change', (e) => config.invertRoll = e.target.checked);
+    if (invertYaw) invertYaw.addEventListener('change', (e) => config.invertYaw = e.target.checked);
+
+    if (calibrateBtn) {
+      calibrateBtn.addEventListener('click', () => {
+        calibration.isSet = false; // Trigger recalibration on next frame
+        console.log('Recalibration queued.');
+      });
+    }
 
     // Theme logic
-    themeToggleBtn.addEventListener('click', () => {
-      const currentTheme = document.documentElement.getAttribute('data-theme');
-      const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-      document.documentElement.setAttribute('data-theme', newTheme);
-      
-      // Update environment colors in Three.js
-      if (newTheme === 'light') {
-        bgPresetSelect.value = 'minimal-light';
-      } else {
-        bgPresetSelect.value = 'dark-slate';
-      }
-      updateStagingEnvironment();
-    });
+    if (themeToggleBtn) {
+      themeToggleBtn.addEventListener('click', () => {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', newTheme);
+        
+        // Update environment colors in Three.js
+        if (newTheme === 'light') {
+          currentStagingPreset = 'minimal-light';
+        } else {
+          currentStagingPreset = 'dark-slate';
+        }
+        updateStagingEnvironment();
 
-    // Screen Source selector behavior
-    screenSourceSelect.addEventListener('change', (e) => {
-      imageUploadGroup.style.display = 'none';
-      videoUploadGroup.style.display = 'none';
-      stopLocalWindowShare(); // Always stop window sharing if we change source
+        if (activeConn && activeConn.open) {
+          activeConn.send({ type: 'sync_state', staging: currentStagingPreset });
+        }
+      });
+    }
 
-      if (e.target.value === 'image') {
-        imageUploadGroup.style.display = 'flex';
-        applyImageTexture();
-      } else if (e.target.value === 'video') {
-        videoUploadGroup.style.display = 'flex';
-        applyVideoTexture();
-      } else if (e.target.value === 'mirror') {
-        applyMirrorTexture();
-      } else if (e.target.value === 'window') {
-        applyWindowShareTexture();
-      } else {
-        applyClockTexture();
-      }
-    });
+    // Screen Source selector behavior (if present)
+    if (screenSourceSelect) {
+      screenSourceSelect.addEventListener('change', (e) => {
+        if (imageUploadGroup) imageUploadGroup.style.display = 'none';
+        if (videoUploadGroup) videoUploadGroup.style.display = 'none';
+        stopLocalWindowShare(); // Always stop window sharing if we change source
 
-    // Preset background presets selector
-    bgPresetSelect.addEventListener('change', () => {
-      updateStagingEnvironment();
-    });
+        if (e.target.value === 'image') {
+          if (imageUploadGroup) imageUploadGroup.style.display = 'flex';
+          applyImageTexture();
+        } else if (e.target.value === 'video') {
+          if (videoUploadGroup) videoUploadGroup.style.display = 'flex';
+          applyVideoTexture();
+        } else if (e.target.value === 'mirror') {
+          applyMirrorTexture();
+        } else if (e.target.value === 'window') {
+          applyWindowShareTexture();
+        } else {
+          applyClockTexture();
+        }
+      });
+    }
 
-    // Titanium finish switcher listener
+    if (bgPresetSelect) {
+      bgPresetSelect.addEventListener('change', () => {
+        updateStagingEnvironment(bgPresetSelect.value);
+      });
+    }
+
+    // Titanium finish switcher listener (if present)
     document.querySelectorAll('#titanium-finish-picker .finish-chip').forEach(chip => {
       chip.addEventListener('click', () => {
         const finish = chip.getAttribute('data-finish');
@@ -427,22 +317,26 @@
       });
     });
 
-    // File inputs listeners
-    imageFileInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        imageFileName.innerText = file.name;
-        applyImageTexture(file);
-      }
-    });
+    // File inputs listeners (if present)
+    if (imageFileInput) {
+      imageFileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          if (imageFileName) imageFileName.innerText = file.name;
+          applyImageTexture(file);
+        }
+      });
+    }
 
-    videoFileInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        videoFileName.innerText = file.name;
-        applyVideoTexture(file);
-      }
-    });
+    if (videoFileInput) {
+      videoFileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          if (videoFileName) videoFileName.innerText = file.name;
+          applyVideoTexture(file);
+        }
+      });
+    }
 
     // ----------------------------------------------------
     // WebRTC Peer Connection (PeerJS) & Host Approval System
@@ -458,9 +352,16 @@
     const modalRejectBtn = document.getElementById('modal-reject-btn');
     const disconnectBtn = document.getElementById('disconnect-device-btn');
 
+    const sidebarElem = document.querySelector('.sidebar');
     function updatePairingVisibility(isPaired) {
       if (pairingPanel) {
         pairingPanel.style.display = isPaired ? 'none' : 'block';
+      }
+      if (sidebarElem) {
+        sidebarElem.style.display = isPaired ? 'none' : 'flex';
+      }
+      if (typeof onWindowResize === 'function') {
+        setTimeout(onWindowResize, 60);
       }
     }
 
@@ -472,7 +373,14 @@
           isConfirmed = true;
           
           if (activeConn && activeConn.open) {
-            activeConn.send({ type: 'pair_accepted' });
+            activeConn.send({
+              type: 'pair_accepted',
+              state: {
+                finish: currentFinish,
+                staging: currentStagingPreset,
+                screenSource: currentScreenType
+              }
+            });
           }
           
           if (pairModal) pairModal.classList.remove('active');
@@ -612,6 +520,39 @@
             } else if (payload && payload.type === 'recalibrate') {
               calibration.isSet = false;
               console.log('Recalibration requested by mobile device.');
+            } else if (payload && payload.type === 'set_screen_source') {
+              const src = payload.source;
+              console.log('Remote screen source requested:', src);
+              if (src === 'image') {
+                applyImageTexture(payload.dataUrl);
+              } else if (src === 'video') {
+                applyVideoTexture(payload.dataUrl);
+              } else if (src === 'mirror') {
+                applyMirrorTexture();
+              } else {
+                applyClockTexture();
+              }
+            } else if (payload && payload.type === 'set_image') {
+              console.log('Remote screenshot received');
+              applyImageTexture(payload.dataUrl);
+            } else if (payload && payload.type === 'set_video') {
+              console.log('Remote demo video received');
+              applyVideoTexture(payload.dataUrl);
+            } else if (payload && payload.type === 'set_finish') {
+              console.log('Remote finish set:', payload.finish);
+              setTitaniumFinish(payload.finish);
+            } else if (payload && payload.type === 'set_staging') {
+              console.log('Remote staging preset set:', payload.preset);
+              updateStagingEnvironment(payload.preset);
+            } else if (payload && payload.type === 'request_state') {
+              if (activeConn && activeConn.open) {
+                activeConn.send({
+                  type: 'sync_state',
+                  finish: currentFinish,
+                  staging: currentStagingPreset,
+                  screenSource: currentScreenType
+                });
+              }
             } else if (payload && payload.type === 'status') {
               if (payload.message && payload.message.includes('disconnected')) {
                 phoneDot.className = 'status-dot disconnected';
@@ -2115,11 +2056,18 @@
     }
 
     // 2. Custom image screen source loading
-    function applyImageTexture(file) {
+    function applyImageTexture(fileOrUrl) {
       currentScreenType = 'image';
       cleanupVideo();
 
-      if (file) {
+      if (typeof fileOrUrl === 'string') {
+        const loader = new THREE.TextureLoader();
+        loader.load(fileOrUrl, (tex) => {
+          tex.generateMipmaps = true;
+          tex.minFilter = THREE.LinearMipmapLinearFilter;
+          updateAllScreenMeshes(tex);
+        });
+      } else if (fileOrUrl instanceof File || fileOrUrl instanceof Blob) {
         const reader = new FileReader();
         reader.onload = (e) => {
           const loader = new THREE.TextureLoader();
@@ -2129,7 +2077,7 @@
             updateAllScreenMeshes(tex);
           });
         };
-        reader.readAsDataURL(file);
+        reader.readAsDataURL(fileOrUrl);
       } else {
         // Default Demo Image Screen
         const canvas = document.createElement('canvas');
@@ -2153,17 +2101,21 @@
     }
 
     // 3. Custom video screen source loading
-    function applyVideoTexture(file) {
+    function applyVideoTexture(fileOrUrl) {
       currentScreenType = 'video';
       cleanupVideo();
 
-      if (file) {
+      if (fileOrUrl) {
         activeVideoElement = document.createElement('video');
         activeVideoElement.autoplay = true;
         activeVideoElement.loop = true;
         activeVideoElement.muted = true;
         activeVideoElement.playsInline = true;
-        activeVideoElement.src = URL.createObjectURL(file);
+        if (typeof fileOrUrl === 'string') {
+          activeVideoElement.src = fileOrUrl;
+        } else {
+          activeVideoElement.src = URL.createObjectURL(fileOrUrl);
+        }
 
         activeVideoElement.oncanplay = () => {
           activeVideoElement.play().catch(console.error);
@@ -2218,11 +2170,12 @@
     // ----------------------------------------------------
     // Environment & Styling Themes Updates
     // ----------------------------------------------------
-    function updateStagingEnvironment() {
-      const preset = bgPresetSelect.value;
-      const currentTheme = document.documentElement.getAttribute('data-theme');
+    function updateStagingEnvironment(preset) {
+      if (preset) currentStagingPreset = preset;
+      else if (bgPresetSelect) currentStagingPreset = bgPresetSelect.value;
+      const effectivePreset = currentStagingPreset;
       
-      switch (preset) {
+      switch (effectivePreset) {
         case 'cyberpunk':
           scene.background.setHex(0x05010a);
           scene.fog.color.setHex(0x05010a);
