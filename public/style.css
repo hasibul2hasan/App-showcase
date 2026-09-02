@@ -1439,3 +1439,29 @@ body.is-paired .mobile-card {
     display: none;
   }
 }
+
+/* Custom Video Player Controls on Paired Mobile */
+.video-player-card {
+  background: #13161f;
+  border: 1px solid var(--panel-border);
+  border-radius: 0 !important;
+}
+
+[data-theme="light"] .video-player-card {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.video-seek-range {
+  width: 100%;
+  height: 6px;
+  background: #202532;
+  outline: none;
+  accent-color: #38bdf8;
+  border-radius: 0 !important;
+  cursor: pointer;
+}
+
+[data-theme="light"] .video-seek-range {
+  background: #e2e8f0;
+}

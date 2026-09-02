@@ -271,6 +271,68 @@
               <input type="file" id="mobile-video-input" accept="video/mp4,video/quicktime,video/webm">
             </div>
             <span class="subtitle" id="mobile-video-name" style="text-align: center; justify-content: center;">No video chosen</span>
+
+            <!-- Video Playback Controls (Active when Custom Video is selected) -->
+            <div id="video-player-controls" class="video-player-card" style="display: none; flex-direction: column; gap: 10px; width: 100%; margin-top: 8px; padding: 12px;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 0.76rem; font-weight: 700; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;">
+                  <span class="status-dot streaming" style="width: 6px; height: 6px;"></span>
+                  <span id="player-video-title">3D Screen Video</span>
+                </span>
+                <span id="player-time-display" style="font-size: 0.74rem; font-family: monospace; color: var(--text-secondary);">0:00 / 0:00</span>
+              </div>
+
+              <!-- Seek Timeline Slider -->
+              <input type="range" id="video-seek-slider" class="video-seek-range" min="0" max="100" value="0" step="0.1">
+
+              <!-- Player Action Buttons Row -->
+              <div style="display: flex; gap: 6px; width: 100%; align-items: center;">
+                <!-- Rewind -10s -->
+                <button id="video-rewind-btn" class="btn btn-secondary" type="button" title="Rewind 10 seconds" style="flex: 1; padding: 8px 6px; font-size: 0.74rem; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 4px; border-radius: 0;">
+                  <svg class="ui-icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="11 19 2 12 11 5 11 19"></polygon>
+                    <polygon points="22 19 13 12 22 5 22 19"></polygon>
+                  </svg>
+                  <span>-10s</span>
+                </button>
+
+                <!-- Play / Pause Main Button -->
+                <button id="video-play-btn" class="btn btn-primary" type="button" title="Play / Pause Video" style="flex: 1.4; padding: 8px 10px; font-size: 0.8rem; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 0; background: #0284c7; border: 1px solid #38bdf8; color: #ffffff;">
+                  <svg id="video-play-icon" class="ui-icon-xs" viewBox="0 0 24 24" fill="currentColor">
+                    <rect x="6" y="4" width="4" height="16"></rect>
+                    <rect x="14" y="4" width="4" height="16"></rect>
+                  </svg>
+                  <span id="video-play-btn-text">Pause</span>
+                </button>
+
+                <!-- Forward +10s -->
+                <button id="video-forward-btn" class="btn btn-secondary" type="button" title="Forward 10 seconds" style="flex: 1; padding: 8px 6px; font-size: 0.74rem; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 4px; border-radius: 0;">
+                  <span>+10s</span>
+                  <svg class="ui-icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="13 19 22 12 13 5 13 19"></polygon>
+                    <polygon points="2 19 11 12 2 5 2 19"></polygon>
+                  </svg>
+                </button>
+
+                <!-- Audio Mute / Unmute Button -->
+                <button id="video-mute-btn" class="btn btn-secondary" type="button" title="Toggle Sound on 3D Screen" style="flex: 1; padding: 8px 6px; font-size: 0.74rem; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 4px; border-radius: 0;">
+                  <svg id="video-mute-icon" class="ui-icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <line x1="23" y1="9" x2="17" y2="15"></line>
+                    <line x1="17" y1="9" x2="23" y2="15"></line>
+                  </svg>
+                  <span id="video-mute-btn-text">Muted</span>
+                </button>
+
+                <!-- Restart / Replay -->
+                <button id="video-restart-btn" class="btn btn-secondary" type="button" title="Restart from 0:00" style="padding: 8px 8px; font-size: 0.74rem; display: flex; align-items: center; justify-content: center; border-radius: 0;">
+                  <svg class="ui-icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                    <path d="M3 3v5h5"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -567,6 +629,8 @@
             }
           } else if (payload && (payload.type === 'sync_state' || payload.type === 'theme_changed')) {
             applySyncState(payload);
+          } else if (payload && payload.type === 'video_status') {
+            updateVideoPlayerUI(payload);
           } else if (payload && payload.type === 'flip_camera') {
             const nextFacing = (currentFacingMode === 'environment') ? 'user' : 'environment';
             setCameraFacing(nextFacing);
@@ -1170,6 +1234,142 @@
     // ----------------------------------------------------
     // Remote Presentation & Staging Controls
     // ----------------------------------------------------
+    const videoPlayerControls = document.getElementById('video-player-controls');
+    const playerVideoTitle = document.getElementById('player-video-title');
+    const playerTimeDisplay = document.getElementById('player-time-display');
+    const videoSeekSlider = document.getElementById('video-seek-slider');
+    const videoPlayBtn = document.getElementById('video-play-btn');
+    const videoPlayIcon = document.getElementById('video-play-icon');
+    const videoPlayBtnText = document.getElementById('video-play-btn-text');
+    const videoRewindBtn = document.getElementById('video-rewind-btn');
+    const videoForwardBtn = document.getElementById('video-forward-btn');
+    const videoMuteBtn = document.getElementById('video-mute-btn');
+    const videoMuteIcon = document.getElementById('video-mute-icon');
+    const videoMuteBtnText = document.getElementById('video-mute-btn-text');
+    const videoRestartBtn = document.getElementById('video-restart-btn');
+
+    let isSeekingVideo = false;
+    let currentVideoState = {
+      currentTime: 0,
+      duration: 0,
+      paused: false,
+      muted: true
+    };
+
+    function formatVideoTime(secs) {
+      if (isNaN(secs) || secs < 0) return '0:00';
+      const m = Math.floor(secs / 60);
+      const s = Math.floor(secs % 60);
+      return m + ':' + (s < 10 ? '0' : '') + s;
+    }
+
+    function updateVideoPlayerUI(state) {
+      if (!state) return;
+      currentVideoState = { ...currentVideoState, ...state };
+
+      if (videoPlayerControls) {
+        if (state.active === false) {
+          videoPlayerControls.style.display = 'none';
+          return;
+        }
+        if (mobileSourceSelect && mobileSourceSelect.value === 'video') {
+          videoPlayerControls.style.display = 'flex';
+        }
+      }
+
+      const cur = currentVideoState.currentTime || 0;
+      const dur = currentVideoState.duration || 0;
+
+      if (playerTimeDisplay) {
+        playerTimeDisplay.innerText = formatVideoTime(cur) + ' / ' + formatVideoTime(dur);
+      }
+
+      if (videoSeekSlider && !isSeekingVideo) {
+        videoSeekSlider.max = (dur > 0) ? dur : 100;
+        videoSeekSlider.value = cur;
+      }
+
+      // Update Play/Pause button
+      if (videoPlayBtnText && videoPlayIcon) {
+        if (currentVideoState.paused) {
+          videoPlayBtnText.innerText = 'Play';
+          videoPlayIcon.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"></polygon>';
+        } else {
+          videoPlayBtnText.innerText = 'Pause';
+          videoPlayIcon.innerHTML = '<rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect>';
+        }
+      }
+
+      // Update Mute button
+      if (videoMuteBtnText && videoMuteIcon) {
+        if (currentVideoState.muted) {
+          videoMuteBtnText.innerText = 'Muted';
+          videoMuteIcon.innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line>';
+        } else {
+          videoMuteBtnText.innerText = 'Sound On';
+          videoMuteIcon.innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>';
+        }
+      }
+    }
+
+    if (videoPlayBtn) {
+      videoPlayBtn.addEventListener('click', () => {
+        if (activeConn && activeConn.open) {
+          activeConn.send({ type: 'video_control', action: 'toggle' });
+        }
+      });
+    }
+
+    if (videoRewindBtn) {
+      videoRewindBtn.addEventListener('click', () => {
+        if (activeConn && activeConn.open) {
+          activeConn.send({ type: 'video_control', action: 'skip', delta: -10 });
+        }
+      });
+    }
+
+    if (videoForwardBtn) {
+      videoForwardBtn.addEventListener('click', () => {
+        if (activeConn && activeConn.open) {
+          activeConn.send({ type: 'video_control', action: 'skip', delta: 10 });
+        }
+      });
+    }
+
+    if (videoMuteBtn) {
+      videoMuteBtn.addEventListener('click', () => {
+        if (activeConn && activeConn.open) {
+          activeConn.send({ type: 'video_control', action: 'toggle_mute' });
+        }
+      });
+    }
+
+    if (videoRestartBtn) {
+      videoRestartBtn.addEventListener('click', () => {
+        if (activeConn && activeConn.open) {
+          activeConn.send({ type: 'video_control', action: 'restart' });
+        }
+      });
+    }
+
+    if (videoSeekSlider) {
+      videoSeekSlider.addEventListener('input', () => {
+        isSeekingVideo = true;
+        const targetTime = parseFloat(videoSeekSlider.value);
+        if (playerTimeDisplay) {
+          playerTimeDisplay.innerText = formatVideoTime(targetTime) + ' / ' + formatVideoTime(currentVideoState.duration);
+        }
+      });
+
+      videoSeekSlider.addEventListener('change', () => {
+        const targetTime = parseFloat(videoSeekSlider.value);
+        if (activeConn && activeConn.open) {
+          activeConn.send({ type: 'video_control', action: 'seek', time: targetTime });
+        }
+        setTimeout(() => { isSeekingVideo = false; }, 250);
+      });
+    }
+
     function applySyncState(state) {
       if (!state) return;
       if (state.finish) {
@@ -1184,6 +1384,7 @@
         mobileSourceSelect.value = state.screenSource;
         if (mobileImageGroup) mobileImageGroup.style.display = state.screenSource === 'image' ? 'flex' : 'none';
         if (mobileVideoGroup) mobileVideoGroup.style.display = state.screenSource === 'video' ? 'flex' : 'none';
+        if (videoPlayerControls) videoPlayerControls.style.display = state.screenSource === 'video' ? 'flex' : 'none';
       }
     }
 
@@ -1192,6 +1393,7 @@
         const val = e.target.value;
         if (mobileImageGroup) mobileImageGroup.style.display = val === 'image' ? 'flex' : 'none';
         if (mobileVideoGroup) mobileVideoGroup.style.display = val === 'video' ? 'flex' : 'none';
+        if (videoPlayerControls) videoPlayerControls.style.display = val === 'video' ? 'flex' : 'none';
 
         if (activeConn && activeConn.open) {
           if (val === 'image' && cachedImageDataUrl) {
@@ -1229,12 +1431,15 @@
         const file = e.target.files[0];
         if (!file) return;
         if (mobileVideoName) mobileVideoName.innerText = file.name;
+        if (playerVideoTitle) playerVideoTitle.innerText = file.name;
+        if (videoPlayerControls) videoPlayerControls.style.display = 'flex';
         
         const reader = new FileReader();
         reader.onload = () => {
           cachedVideoDataUrl = reader.result;
           if (mobileSourceSelect) mobileSourceSelect.value = 'video';
           if (mobileVideoGroup) mobileVideoGroup.style.display = 'flex';
+          if (videoPlayerControls) videoPlayerControls.style.display = 'flex';
           if (activeConn && activeConn.open) {
             activeConn.send({ type: 'set_video', dataUrl: cachedVideoDataUrl });
           }

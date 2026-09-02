@@ -637,6 +637,8 @@
             } else if (payload && payload.type === 'set_video') {
               console.log('Remote demo video received');
               applyVideoTexture(payload.dataUrl);
+            } else if (payload && payload.type === 'video_control') {
+              handleRemoteVideoControl(payload);
             } else if (payload && payload.type === 'set_finish') {
               console.log('Remote finish set:', payload.finish);
               setTitaniumFinish(payload.finish);
@@ -651,6 +653,9 @@
                   staging: currentStagingPreset,
                   screenSource: currentScreenType
                 });
+                if (currentScreenType === 'video' && activeVideoElement) {
+                  sendVideoStatusToPeer();
+                }
               }
             } else if (payload && (payload.type === 'disconnect' || (payload.type === 'status' && payload.message && payload.message.includes('disconnected')))) {
               phoneDot.className = 'status-dot disconnected';
@@ -2785,6 +2790,14 @@
           activeVideoElement.src = URL.createObjectURL(fileOrUrl);
         }
 
+        activeVideoElement.addEventListener('timeupdate', sendVideoStatusToPeer);
+        activeVideoElement.addEventListener('play', sendVideoStatusToPeer);
+        activeVideoElement.addEventListener('pause', sendVideoStatusToPeer);
+        activeVideoElement.addEventListener('volumechange', sendVideoStatusToPeer);
+        activeVideoElement.addEventListener('loadedmetadata', () => {
+          sendVideoStatusToPeer();
+        });
+
         activeVideoElement.oncanplay = () => {
           activeVideoElement.play().catch(console.error);
           const videoTex = new THREE.VideoTexture(activeVideoElement);
@@ -2792,6 +2805,7 @@
           videoTex.magFilter = THREE.LinearFilter;
           videoTex.format = THREE.RGBAFormat;
           updateAllScreenMeshes(videoTex);
+          sendVideoStatusToPeer();
         };
       } else {
         // Fallback default demo color noise
@@ -2821,6 +2835,69 @@
       }
     }
 
+    function sendVideoStatusToPeer() {
+      if (!activeVideoElement || currentScreenType !== 'video') return;
+      if (activeConn && activeConn.open) {
+        activeConn.send({
+          type: 'video_status',
+          currentTime: activeVideoElement.currentTime,
+          duration: activeVideoElement.duration || 0,
+          paused: activeVideoElement.paused,
+          muted: activeVideoElement.muted,
+          volume: activeVideoElement.volume
+        });
+      }
+    }
+
+    function handleRemoteVideoControl(payload) {
+      if (!activeVideoElement) return;
+      console.log('Video control command received from mobile:', payload.action);
+      
+      switch (payload.action) {
+        case 'play':
+          activeVideoElement.play().catch(console.error);
+          break;
+        case 'pause':
+          activeVideoElement.pause();
+          break;
+        case 'toggle':
+          if (activeVideoElement.paused) {
+            activeVideoElement.play().catch(console.error);
+          } else {
+            activeVideoElement.pause();
+          }
+          break;
+        case 'seek':
+          if (typeof payload.time === 'number') {
+            activeVideoElement.currentTime = Math.max(0, Math.min(activeVideoElement.duration || 0, payload.time));
+          }
+          break;
+        case 'skip':
+          if (typeof payload.delta === 'number') {
+            activeVideoElement.currentTime = Math.max(0, Math.min(activeVideoElement.duration || 0, activeVideoElement.currentTime + payload.delta));
+          }
+          break;
+        case 'mute':
+          activeVideoElement.muted = true;
+          break;
+        case 'unmute':
+          activeVideoElement.muted = false;
+          activeVideoElement.play().catch(console.error);
+          break;
+        case 'toggle_mute':
+          activeVideoElement.muted = !activeVideoElement.muted;
+          if (!activeVideoElement.muted) {
+            activeVideoElement.play().catch(console.error);
+          }
+          break;
+        case 'restart':
+          activeVideoElement.currentTime = 0;
+          activeVideoElement.play().catch(console.error);
+          break;
+      }
+      sendVideoStatusToPeer();
+    }
+
     function cleanupVideo() {
       if (demoVideoLoopId) {
         cancelAnimationFrame(demoVideoLoopId);
@@ -2832,6 +2909,15 @@
         activeVideoElement.srcObject = null;
         activeVideoElement.load();
         activeVideoElement = null;
+      }
+      if (activeConn && activeConn.open) {
+        activeConn.send({
+          type: 'video_status',
+          active: false,
+          paused: true,
+          currentTime: 0,
+          duration: 0
+        });
       }
     }
 
