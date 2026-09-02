@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>iPhone 17 Pro Controller</title>
+  <title>OMGMimiq Controller</title>
   <link rel="stylesheet" href="/style.css">
   <!-- PeerJS CDN for WebRTC P2P Sync -->
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
@@ -16,9 +16,9 @@
         <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
           <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3"></path>
         </svg>
-        <span>iPhone 17 Pro Controller</span>
+        <span>OMGMimiq Controller</span>
       </div>
-      <p class="subtitle">Stream motion & media to 3D showcase via WebRTC P2P</p>
+      <p class="subtitle">Stream motion & media to OMGMimiq via WebRTC P2P</p>
     </div>
 
     <!-- Main Controller Card -->
@@ -76,6 +76,86 @@
         <p class="subtitle">Tap to toggle tracking or video mirroring</p>
       </div>
 
+      <!-- Remote Control Features Section (Visible after connected) -->
+      <div id="remote-control-section" style="display: none; flex-direction: column; gap: 16px; width: 100%;">
+        
+        <!-- 2. Screen Presentation Source -->
+        <div class="panel">
+          <span class="panel-title">2. Screen Presentation Source</span>
+          
+          <div class="control-group">
+            <label class="control-label">Source Type</label>
+            <select id="mobile-source-select">
+              <option value="clock">iOS 18/19 Pro Dynamic Screen</option>
+              <option value="image">Custom Screenshot (.png/.jpg)</option>
+              <option value="video">Custom Demo Video (.mp4)</option>
+            </select>
+          </div>
+
+          <!-- Custom Image Upload -->
+          <div class="control-group" id="mobile-image-group" style="display: none;">
+            <label class="control-label">Upload Screenshot to 3D Screen</label>
+            <div class="btn btn-secondary file-upload-btn">
+              <span>Choose Photo...</span>
+              <input type="file" id="mobile-image-input" accept="image/*">
+            </div>
+            <span class="subtitle" id="mobile-image-name" style="text-align: center;">No photo chosen</span>
+          </div>
+
+          <!-- Custom Video Upload -->
+          <div class="control-group" id="mobile-video-group" style="display: none;">
+            <label class="control-label">Upload Demo Video to 3D Screen</label>
+            <div class="btn btn-secondary file-upload-btn">
+              <span>Choose Video...</span>
+              <input type="file" id="mobile-video-input" accept="video/mp4,video/quicktime,video/webm">
+            </div>
+            <span class="subtitle" id="mobile-video-name" style="text-align: center;">No video chosen</span>
+          </div>
+        </div>
+
+        <!-- 4. iPhone 17 Pro Finish & Staging -->
+        <div class="panel">
+          <span class="panel-title">4. iPhone 17 Pro Finish &amp; Staging</span>
+          
+          <div class="control-group">
+            <label class="control-label">Titanium Finish</label>
+            <div class="finish-swatches" id="mobile-finish-picker">
+              <div class="finish-chip active" data-finish="natural" title="Natural Titanium">
+                <div class="finish-dot" style="background: linear-gradient(135deg, #a8a49d, #78746e);"></div>
+                <span>Natural</span>
+              </div>
+              <div class="finish-chip" data-finish="desert" title="Desert Titanium">
+                <div class="finish-dot" style="background: linear-gradient(135deg, #cfb799, #9e8568);"></div>
+                <span>Desert</span>
+              </div>
+              <div class="finish-chip" data-finish="black" title="Black Titanium">
+                <div class="finish-dot" style="background: linear-gradient(135deg, #3d3e42, #1c1d20);"></div>
+                <span>Black</span>
+              </div>
+              <div class="finish-chip" data-finish="teal" title="Deep Teal Titanium">
+                <div class="finish-dot" style="background: linear-gradient(135deg, #385661, #18272d);"></div>
+                <span>Teal</span>
+              </div>
+              <div class="finish-chip" data-finish="white" title="White Titanium">
+                <div class="finish-dot" style="background: linear-gradient(135deg, #f0f2f5, #b8bac0);"></div>
+                <span>White</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="control-group" style="margin-top: 6px;">
+            <label class="control-label">Studio Background Style</label>
+            <select id="mobile-bg-preset">
+              <option value="dark-slate">Deep Slate Gradient (Default)</option>
+              <option value="cyberpunk">Cyberpunk Neon Ambient</option>
+              <option value="minimal-light">Studio Soft Light</option>
+              <option value="pure-black">OLED Pure Black</option>
+            </select>
+          </div>
+        </div>
+
+      </div>
+
       <!-- Telemetry Live Stream -->
       <div class="panel">
         <span class="panel-title" style="font-size: 0.75rem;">Device Orientation Telemetry</span>
@@ -113,6 +193,21 @@
     const trackBtnText = document.getElementById('track-btn-text');
     const phoneCalibrateBtn = document.getElementById('phone-calibrate-btn');
     const deviceInfo = document.getElementById('device-info');
+
+    // Remote Control Elements
+    const remoteControlSection = document.getElementById('remote-control-section');
+    const mobileSourceSelect = document.getElementById('mobile-source-select');
+    const mobileImageGroup = document.getElementById('mobile-image-group');
+    const mobileImageInput = document.getElementById('mobile-image-input');
+    const mobileImageName = document.getElementById('mobile-image-name');
+    const mobileVideoGroup = document.getElementById('mobile-video-group');
+    const mobileVideoInput = document.getElementById('mobile-video-input');
+    const mobileVideoName = document.getElementById('mobile-video-name');
+    const mobileFinishPicker = document.getElementById('mobile-finish-picker');
+    const mobileBgPreset = document.getElementById('mobile-bg-preset');
+
+    let cachedImageDataUrl = null;
+    let cachedVideoDataUrl = null;
 
     let peer = null;
     let activeConn = null;
@@ -196,10 +291,10 @@
 
     function getDeviceName() {
       const ua = navigator.userAgent;
-      if (/iPhone/i.test(ua)) return 'iPhone 17 Pro';
+      if (/iPhone/i.test(ua)) return 'iPhone Controller';
       if (/iPad/i.test(ua)) return 'Apple iPad';
       if (/Android/i.test(ua)) return 'Android Device';
-      return 'iPhone 17 Pro Controller';
+      return 'OMGMimiq Controller';
     }
 
     function connectToDesktop() {
@@ -215,7 +310,7 @@
         return;
       }
 
-      const targetPeerId = 'appshowcase-' + room;
+      const targetPeerId = 'omgmimiq-' + room;
       updateStatus('connecting', 'Connecting...');
       connectBtn.disabled = true;
       roomInput.disabled = true;
@@ -234,6 +329,7 @@
           updateStatus('connecting', 'Waiting for Host...');
           pairingSection.style.display = 'none';
           trackingSection.style.display = 'none';
+          if (remoteControlSection) remoteControlSection.style.display = 'none';
           deviceInfo.innerText = 'Pairing request sent. Waiting for host to approve...';
 
           // Send pair request with device name
@@ -254,12 +350,21 @@
             updateStatus('connected', 'Connected');
             pairingSection.style.display = 'none';
             trackingSection.style.display = 'block';
+            trackingSection.style.display = 'flex';
+            if (remoteControlSection) remoteControlSection.style.display = 'flex';
             deviceInfo.innerText = 'Connected via WebRTC. Ready to stream.';
+
+            if (payload.state) {
+              applySyncState(payload.state);
+            }
+          } else if (payload && (payload.type === 'sync_state' || payload.type === 'theme_changed')) {
+            applySyncState(payload);
           } else if (payload && payload.type === 'pair_rejected') {
             console.log('Host rejected pairing request.');
             updateStatus('disconnected', 'Declined by Host');
             pairingSection.style.display = 'block';
             trackingSection.style.display = 'none';
+            if (remoteControlSection) remoteControlSection.style.display = 'none';
             connectBtn.disabled = false;
             roomInput.disabled = false;
             deviceInfo.innerText = 'Connection request was declined by host.';
@@ -271,6 +376,7 @@
             updateStatus('disconnected', 'Disconnected');
             pairingSection.style.display = 'block';
             trackingSection.style.display = 'none';
+            if (remoteControlSection) remoteControlSection.style.display = 'none';
             connectBtn.disabled = false;
             roomInput.disabled = false;
             deviceInfo.innerText = 'Session disconnected by host.';
@@ -285,6 +391,7 @@
           updateStatus('disconnected', 'Disconnected');
           pairingSection.style.display = 'block';
           trackingSection.style.display = 'none';
+          if (remoteControlSection) remoteControlSection.style.display = 'none';
           connectBtn.disabled = false;
           roomInput.disabled = false;
           deviceInfo.innerText = 'Connection lost. Try reconnecting.';
@@ -455,7 +562,7 @@
         if (peer && room) {
           try {
             if (activeCall) activeCall.close();
-            activeCall = peer.call('appshowcase-' + room, screenStream);
+            activeCall = peer.call('omgmimiq-' + room, screenStream);
           } catch(e) {
             console.log('Direct call fallback to canvas streaming:', e);
           }
@@ -559,7 +666,7 @@
         if (peer && room) {
           try {
             if (activeCall) activeCall.close();
-            activeCall = peer.call('appshowcase-' + room, cameraStream);
+            activeCall = peer.call('omgmimiq-' + room, cameraStream);
           } catch(e) {
             console.log('Direct call fallback to canvas streaming:', e);
           }
@@ -615,6 +722,103 @@
       cameraBtnText.innerText = 'Share Camera';
       cameraBtn.style.background = 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)';
       cameraBtn.style.boxShadow = '0 0 20px rgba(59, 130, 246, 0.4)';
+    }
+
+    // ----------------------------------------------------
+    // Remote Presentation & Staging Controls
+    // ----------------------------------------------------
+    function applySyncState(state) {
+      if (!state) return;
+      if (state.finish) {
+        document.querySelectorAll('#mobile-finish-picker .finish-chip').forEach(chip => {
+          chip.classList.toggle('active', chip.getAttribute('data-finish') === state.finish);
+        });
+      }
+      if (state.staging && mobileBgPreset) {
+        mobileBgPreset.value = state.staging;
+      }
+      if (state.screenSource && mobileSourceSelect) {
+        mobileSourceSelect.value = state.screenSource;
+        if (mobileImageGroup) mobileImageGroup.style.display = state.screenSource === 'image' ? 'flex' : 'none';
+        if (mobileVideoGroup) mobileVideoGroup.style.display = state.screenSource === 'video' ? 'flex' : 'none';
+      }
+    }
+
+    if (mobileSourceSelect) {
+      mobileSourceSelect.addEventListener('change', (e) => {
+        const val = e.target.value;
+        if (mobileImageGroup) mobileImageGroup.style.display = val === 'image' ? 'flex' : 'none';
+        if (mobileVideoGroup) mobileVideoGroup.style.display = val === 'video' ? 'flex' : 'none';
+
+        if (activeConn && activeConn.open) {
+          if (val === 'image' && cachedImageDataUrl) {
+            activeConn.send({ type: 'set_image', dataUrl: cachedImageDataUrl });
+          } else if (val === 'video' && cachedVideoDataUrl) {
+            activeConn.send({ type: 'set_video', dataUrl: cachedVideoDataUrl });
+          } else {
+            activeConn.send({ type: 'set_screen_source', source: val });
+          }
+        }
+      });
+    }
+
+    if (mobileImageInput) {
+      mobileImageInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        if (mobileImageName) mobileImageName.innerText = file.name;
+        
+        const reader = new FileReader();
+        reader.onload = () => {
+          cachedImageDataUrl = reader.result;
+          if (mobileSourceSelect) mobileSourceSelect.value = 'image';
+          if (mobileImageGroup) mobileImageGroup.style.display = 'flex';
+          if (activeConn && activeConn.open) {
+            activeConn.send({ type: 'set_image', dataUrl: cachedImageDataUrl });
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    if (mobileVideoInput) {
+      mobileVideoInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        if (mobileVideoName) mobileVideoName.innerText = file.name;
+        
+        const reader = new FileReader();
+        reader.onload = () => {
+          cachedVideoDataUrl = reader.result;
+          if (mobileSourceSelect) mobileSourceSelect.value = 'video';
+          if (mobileVideoGroup) mobileVideoGroup.style.display = 'flex';
+          if (activeConn && activeConn.open) {
+            activeConn.send({ type: 'set_video', dataUrl: cachedVideoDataUrl });
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    document.querySelectorAll('#mobile-finish-picker .finish-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const finish = chip.getAttribute('data-finish');
+        document.querySelectorAll('#mobile-finish-picker .finish-chip').forEach(c => {
+          c.classList.toggle('active', c === chip);
+        });
+        if (finish && activeConn && activeConn.open) {
+          activeConn.send({ type: 'set_finish', finish });
+        }
+      });
+    });
+
+    if (mobileBgPreset) {
+      mobileBgPreset.addEventListener('change', (e) => {
+        const preset = e.target.value;
+        if (activeConn && activeConn.open) {
+          activeConn.send({ type: 'set_staging', preset });
+        }
+      });
     }
   </script>
 </body>

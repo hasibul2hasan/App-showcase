@@ -192,7 +192,7 @@ server.listen(port, () => {
   }
 
   console.log(`=================================================`);
-  console.log(`  Motion Sync Mockup Server running on:`);
+  console.log(`  OMGMimiq Server running on:`);
   console.log(`  - Local:   http://localhost:${port}`);
   if (localIp !== 'localhost') {
     console.log(`  - Network: http://${localIp}:${port}`);

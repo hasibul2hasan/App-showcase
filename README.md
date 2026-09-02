@@ -1,8 +1,6 @@
-# Motion-Synced 3D Mobile Mockup Web Application
-
-A real-time, motion-synced 3D smartphone mockup web application. This project uses a physical mobile device's gyroscope (`DeviceOrientation` API) to rotate a high-fidelity 3D phone rendered in a desktop browser in real-time. Communication between the mobile controller and the desktop viewport is managed via **WebRTC Peer-to-Peer (PeerJS)** with room-based pairing.
+# OMGMimiq - Motion-Synced 3D Mobile Mockup Web Application
+**OMGMimiq** is a real-time, motion-synced 3D smartphone mockup web application. This project uses a physical mobile device's gyroscope (`DeviceOrientation` API) to rotate a high-fidelity 3D phone rendered in a desktop browser in real-time. Communication between the mobile controller and the desktop viewport is managed via **WebRTC Peer-to-Peer (PeerJS)** with room-based pairing.
 ---
-
 ## ⚡ 100% Serverless & Netlify Ready
 
 1. **Signaling & P2P Broker (PeerJS):** Cloud signaling connects desktop and phone clients via WebRTC data channels. Once paired, all sensor telemetry flows directly peer-to-peer between devices with ultra-low latency.
@@ -25,15 +23,14 @@ Start the local static server:
 npm run dev
 ```
 Or start the server directly:
+```bash
 npm start
-```
 The server will bind to port `3000` on all network interfaces (`0.0.0.0`), printing:
 ```text
 =================================================
-  Motion Sync Mockup Server running on:
+  OMGMimiq Server running on:
   - Local:   http://localhost:3000
 =================================================
-```
 
 ---
 

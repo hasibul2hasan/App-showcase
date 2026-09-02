@@ -1,7 +1,7 @@
 {
-  "name": "app-showcase-motion-sync",
+  "name": "omgmimiq",
   "version": "1.0.0",
-  "description": "Real-time motion-synced 3D mobile mockup web application",
+  "description": "OMGMimiq - Real-time motion-synced 3D mobile mockup web application",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
