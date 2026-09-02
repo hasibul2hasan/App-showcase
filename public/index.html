@@ -28,9 +28,21 @@
   <!-- Floating Pairing Connection Window (Top Left) -->
   <div class="panel floating-pairing-widget" id="pairing-panel">
     <div class="pairing-code-container">
-      <span class="pairing-label">Pairing Code</span>
+      <span class="pairing-label" style="display: inline-flex; align-items: center; gap: 6px;">
+        <svg class="ui-icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="11" width="18" height="11"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+        Pairing Code
+      </span>
       <span class="pairing-code" id="display-room-code">----</span>
-      <p class="subtitle">Scan QR code with your mobile device to pair:</p>
+      <p class="subtitle" style="display: inline-flex; align-items: center; gap: 6px; margin-top: 2px;">
+        <svg class="ui-icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="5" y="2" width="14" height="20"></rect>
+          <line x1="12" y1="18" x2="12.01" y2="18"></line>
+        </svg>
+        Scan QR code with mobile device:
+      </p>
       <div id="qrcode"></div>
     </div>
   </div>
@@ -39,39 +51,73 @@
   <div id="status-monitor-widget" class="floating-status-widget">
     <div class="floating-status-header">
       <div class="floating-header-left">
-        <svg style="width: 14px; height: 14px; color: var(--accent-color); flex-shrink: 0;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9.348 14.651a3.75 3.75 0 010-5.303m5.304 0a3.75 3.75 0 010 5.303m-7.425 2.122a6.75 6.75 0 010-9.546m9.546 0a6.75 6.75 0 010 9.546M12 12h.008v.008H12V12z"></path>
+        <svg class="ui-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
         </svg>
-        <span class="floating-status-title">Status Monitor</span>
+        <span class="floating-status-title">Status</span>
       </div>
       <div class="floating-header-actions">
         <button id="theme-toggle" class="widget-btn" title="Toggle Staging Theme">
-          <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"></path>
+          <svg class="ui-icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
           </svg>
+          Theme
         </button>
         <button id="camera-reset" class="widget-btn" title="Reset Camera View">
-          <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15 15l-6 6m0 0l-3-3m3 3V9a9 9 0 1118 0v3"></path>
+          <svg class="ui-icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="22" y1="12" x2="18" y2="12"></line>
+            <line x1="6" y1="12" x2="2" y2="12"></line>
+            <line x1="12" y1="6" x2="12" y2="2"></line>
+            <line x1="12" y1="22" x2="12" y2="18"></line>
           </svg>
+          Reset
         </button>
       </div>
     </div>
     <div class="status-row">
-      <span class="status-label">Connection:</span>
+      <span class="status-label">
+        <svg class="ui-icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M5 12.55a11 11 0 0 1 14.08 0"></path>
+          <path d="M1.42 9a16 16 0 0 1 21.16 0"></path>
+          <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+          <line x1="12" y1="20" x2="12.01" y2="20"></line>
+        </svg>
+        Connection:
+      </span>
       <div class="status-indicator">
         <span class="status-dot disconnected" id="server-status-dot"></span>
         <span id="server-status-text">Connecting...</span>
       </div>
     </div>
     <div class="status-row">
-      <span class="status-label">Mobile Device:</span>
+      <span class="status-label">
+        <svg class="ui-icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="5" y="2" width="14" height="20"></rect>
+          <line x1="12" y1="18" x2="12.01" y2="18"></line>
+        </svg>
+        Mobile Device:
+      </span>
       <div class="status-val-group">
         <div class="status-indicator">
           <span class="status-dot disconnected" id="phone-status-dot"></span>
           <span id="phone-status-text">Not Paired</span>
         </div>
-        <button id="disconnect-device-btn" class="btn-disconnect" title="Disconnect device">Disconnect</button>
+        <button id="disconnect-device-btn" class="btn-disconnect" title="Disconnect device">
+          <svg class="ui-icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+            <line x1="12" y1="2" x2="12" y2="12"></line>
+          </svg>
+          Disconnect
+        </button>
       </div>
     </div>
   </div>
@@ -79,22 +125,35 @@
   <!-- Pairing Confirmation Modal (Host Approval) -->
   <div id="pair-modal" class="modal-overlay">
     <div class="modal-card">
-      <div class="modal-icon-container">
-        <svg style="width: 28px; height: 28px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3"></path>
+      <div class="modal-header-icon">
+        <svg class="ui-icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="5" y="2" width="14" height="20"></rect>
+          <line x1="12" y1="18" x2="12.01" y2="18"></line>
         </svg>
       </div>
       <h3 class="modal-title">Device Pairing Request</h3>
       <p class="modal-desc">A mobile controller is requesting permission to connect and control OMGMimiq.</p>
       <div class="modal-device-badge">
-        <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244"></path>
+        <svg class="ui-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
         </svg>
         <span id="modal-device-name">Mobile Controller</span>
       </div>
       <div class="modal-actions">
-        <button id="modal-reject-btn" class="btn btn-danger">Decline</button>
-        <button id="modal-accept-btn" class="btn btn-success">Allow & Pair</button>
+        <button id="modal-reject-btn" class="btn btn-danger">
+          <svg class="ui-icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+          Decline
+        </button>
+        <button id="modal-accept-btn" class="btn btn-success">
+          <svg class="ui-icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          Allow & Pair
+        </button>
       </div>
     </div>
   </div>
@@ -716,8 +775,8 @@
     function init3D() {
       // 1. Scene
       scene = new THREE.Scene();
-      scene.background = new THREE.Color(0x0b0f19);
-      scene.fog = new THREE.FogExp2(0x0b0f19, 0.015);
+      scene.background = new THREE.Color(0x0c0d10);
+      scene.fog = new THREE.FogExp2(0x0c0d10, 0.012);
 
       const width = container.clientWidth || window.innerWidth;
       const height = container.clientHeight || window.innerHeight;
@@ -753,10 +812,10 @@
       floorMesh.receiveShadow = true;
       scene.add(floorMesh);
 
-      // Subtle Staging Grid
-      const grid = new THREE.GridHelper(50, 50, 0x4f46e5, 0x1e293b);
+      // Subtle Staging Grid (Crisp neutral studio lines)
+      const grid = new THREE.GridHelper(50, 50, 0x272a31, 0x181a20);
       grid.position.y = -4.49;
-      grid.material.opacity = 0.2;
+      grid.material.opacity = 0.35;
       grid.material.transparent = true;
       scene.add(grid);
 
@@ -2171,9 +2230,9 @@
           break;
         case 'dark-slate':
         default:
-          scene.background.setHex(0x0b0f19);
-          scene.fog.color.setHex(0x0b0f19);
-          renderer.setClearColor(0x0b0f19);
+          scene.background.setHex(0x0c0d10);
+          scene.fog.color.setHex(0x0c0d10);
+          renderer.setClearColor(0x0c0d10);
           break;
       }
     }

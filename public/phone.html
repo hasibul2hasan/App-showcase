@@ -13,12 +13,21 @@
     <!-- Header -->
     <div class="header" style="text-align: center; width: 100%;">
       <div class="logo" style="justify-content: center; font-size: 1.5rem;">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3"></path>
+        <svg class="ui-icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="5" y="2" width="14" height="20"></rect>
+          <line x1="12" y1="18" x2="12.01" y2="18"></line>
         </svg>
         <span>OMGMimiq Controller</span>
       </div>
-      <p class="subtitle">Stream motion & media to OMGMimiq via WebRTC P2P</p>
+      <p class="subtitle" style="justify-content: center;">
+        <svg class="ui-icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M5 12.55a11 11 0 0 1 14.08 0"></path>
+          <path d="M1.42 9a16 16 0 0 1 21.16 0"></path>
+          <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+          <line x1="12" y1="20" x2="12.01" y2="20"></line>
+        </svg>
+        Stream motion & media to OMGMimiq via WebRTC P2P
+      </p>
     </div>
 
     <!-- Main Controller Card -->
@@ -29,54 +38,98 @@
           <span class="status-dot disconnected" id="status-dot"></span>
           <span id="status-text" style="font-weight: 600;">Disconnected</span>
         </div>
-        <button id="phone-disconnect-btn" class="btn-disconnect" style="display: none;" title="Disconnect from session">Disconnect</button>
+        <button id="phone-disconnect-btn" class="btn-disconnect" style="display: none;" title="Disconnect from session">
+          <svg class="ui-icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+            <line x1="12" y1="2" x2="12" y2="12"></line>
+          </svg>
+          Disconnect
+        </button>
       </div>
 
       <!-- Pairing Section -->
       <div id="pairing-section" class="control-group">
-        <label class="control-label">Pairing Code</label>
+        <label class="control-label">
+          <span class="icon-label">
+            <svg class="ui-icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            Pairing Code
+          </span>
+        </label>
         <div class="pairing-input-container">
           <input type="text" id="room-input" class="pairing-input" placeholder="e.g. 1234" maxlength="4" pattern="[0-9]*" inputmode="numeric">
-          <button id="connect-btn" class="btn btn-primary" style="width: auto; padding: 10px 20px;">Pair</button>
+          <button id="connect-btn" class="btn btn-primary" style="width: auto; padding: 10px 20px;">
+            <svg class="ui-icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+            </svg>
+            Pair
+          </button>
         </div>
       </div>
 
       <!-- Enable Tracking & Screen Share Buttons (Visible after connected) -->
-      <div id="tracking-section" style="display: none; text-align: center; flex-direction: column; gap: 16px; align-items: center; width: 100%;">
-        <!-- Motion Tracking Button (Top Row) -->
-        <button id="track-btn" class="motion-btn" style="margin: 0; width: 140px; height: 140px; font-size: 0.85rem;">
-          <svg style="width: 32px; height: 32px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15.042 21.672L13.684 16.6m0 0l-2.51 2.225.569-9.47 5.227 7.917-3.286-.672zM12 2.25V4.5m5.303.197l-1.591 1.591M21.75 12h-2.25m-.197 5.303l-1.591-1.591M12 21.75V19.5m-5.303-.197l1.591-1.591M2.25 12h2.25m-.197-5.303l1.591 1.591"></path>
-          </svg>
-          <span id="track-btn-text">Enable Motion</span>
+      <div id="tracking-section" style="display: none; flex-direction: column; gap: 12px; align-items: stretch; width: 100%;">
+        <!-- Motion Tracking Button -->
+        <button id="track-btn" class="controller-tile-btn">
+          <div class="controller-tile-header">
+            <div class="controller-tile-title-group">
+              <svg class="ui-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <ellipse cx="12" cy="12" rx="4" ry="10"></ellipse>
+                <line x1="2" y1="12" x2="22" y2="12"></line>
+              </svg>
+              <span class="controller-tile-title">Motion Sensor</span>
+            </div>
+            <span class="controller-indicator" id="track-indicator">STANDBY</span>
+          </div>
+          <span class="controller-tile-desc" id="track-btn-text">Enable Motion</span>
         </button>
 
         <!-- Recalibrate Center Button -->
-        <button id="phone-calibrate-btn" class="btn btn-secondary" style="display: none; width: 100%; max-width: 250px; padding: 10px; font-size: 0.85rem; border-radius: 12px; gap: 8px; justify-content: center; align-items: center;">
-          <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"></path>
+        <button id="phone-calibrate-btn" class="btn btn-secondary" style="display: none; width: 100%; padding: 12px; font-size: 0.85rem; border-radius: 0;">
+          <svg class="ui-icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="22" y1="12" x2="18" y2="12"></line>
+            <line x1="6" y1="12" x2="2" y2="12"></line>
+            <line x1="12" y1="6" x2="12" y2="2"></line>
+            <line x1="12" y1="22" x2="12" y2="18"></line>
           </svg>
-          <span>Recalibrate Center</span>
+          Recalibrate Center View
         </button>
 
-        <!-- Media Sharing Buttons (Bottom Row) -->
-        <div style="display: flex; gap: 12px; justify-content: center; align-items: center; width: 100%;">
-          <button id="share-btn" class="motion-btn" style="margin: 0; width: 120px; height: 120px; font-size: 0.75rem; background: linear-gradient(135deg, #a855f7 0%, #7e22ce 100%); box-shadow: 0 0 15px rgba(168, 85, 247, 0.35);">
-            <svg style="width: 24px; height: 24px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25"></path>
-            </svg>
-            <span id="share-btn-text">Share Screen</span>
+        <!-- Media Sharing Buttons -->
+        <div style="display: flex; gap: 10px; width: 100%;">
+          <button id="share-btn" class="controller-tile-btn" style="flex: 1;">
+            <div class="controller-tile-header">
+              <div class="controller-tile-title-group">
+                <svg class="ui-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="2" y="3" width="20" height="14"></rect>
+                  <line x1="8" y1="21" x2="16" y2="21"></line>
+                  <line x1="12" y1="17" x2="12" y2="21"></line>
+                </svg>
+                <span class="controller-tile-title">Screen</span>
+              </div>
+            </div>
+            <span class="controller-tile-desc" id="share-btn-text">Share Screen</span>
           </button>
 
-          <button id="camera-btn" class="motion-btn" style="margin: 0; width: 120px; height: 120px; font-size: 0.75rem; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); box-shadow: 0 0 15px rgba(59, 130, 246, 0.35);">
-            <svg style="width: 24px; height: 24px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"></path>
-              <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z"></path>
-            </svg>
-            <span id="camera-btn-text">Share Camera</span>
+          <button id="camera-btn" class="controller-tile-btn" style="flex: 1;">
+            <div class="controller-tile-header">
+              <div class="controller-tile-title-group">
+                <svg class="ui-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                  <rect x="1" y="5" width="15" height="14"></rect>
+                </svg>
+                <span class="controller-tile-title">Camera</span>
+              </div>
+            </div>
+            <span class="controller-tile-desc" id="camera-btn-text">Share Camera</span>
           </button>
         </div>
-        <p class="subtitle">Tap to toggle tracking or video mirroring</p>
+        <p class="subtitle" style="text-align: center; margin: 4px 0 0 0; justify-content: center;">Tap controls to toggle real-time sync</p>
       </div>
 
       <!-- Remote Control Features Section (Visible after connected) -->
@@ -84,10 +137,26 @@
         
         <!-- 2. Screen Presentation Source -->
         <div class="panel">
-          <span class="panel-title">2. Screen Presentation Source</span>
+          <span class="panel-title">
+            <svg class="ui-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+              <polyline points="2 17 12 22 22 17"></polyline>
+              <polyline points="2 12 12 17 22 12"></polyline>
+            </svg>
+            <span>Screen Presentation Source</span>
+          </span>
           
           <div class="control-group">
-            <label class="control-label">Source Type</label>
+            <label class="control-label">
+              <span class="icon-label">
+                <svg class="ui-icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="2" y="3" width="20" height="14"></rect>
+                  <line x1="8" y1="21" x2="16" y2="21"></line>
+                  <line x1="12" y1="17" x2="12" y2="21"></line>
+                </svg>
+                Source Type
+              </span>
+            </label>
             <select id="mobile-source-select">
               <option value="clock">iOS 18/19 Pro Dynamic Screen</option>
               <option value="image">Custom Screenshot (.png/.jpg)</option>
@@ -97,31 +166,75 @@
 
           <!-- Custom Image Upload -->
           <div class="control-group" id="mobile-image-group" style="display: none;">
-            <label class="control-label">Upload Screenshot to 3D Screen</label>
+            <label class="control-label">
+              <span class="icon-label">
+                <svg class="ui-icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="18" height="18"></rect>
+                  <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                  <polyline points="21 15 16 10 5 21"></polyline>
+                </svg>
+                Upload Screenshot to 3D Screen
+              </span>
+            </label>
             <div class="btn btn-secondary file-upload-btn">
+              <svg class="ui-icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
               <span>Choose Photo...</span>
               <input type="file" id="mobile-image-input" accept="image/*">
             </div>
-            <span class="subtitle" id="mobile-image-name" style="text-align: center;">No photo chosen</span>
+            <span class="subtitle" id="mobile-image-name" style="text-align: center; justify-content: center;">No photo chosen</span>
           </div>
 
           <!-- Custom Video Upload -->
           <div class="control-group" id="mobile-video-group" style="display: none;">
-            <label class="control-label">Upload Demo Video to 3D Screen</label>
+            <label class="control-label">
+              <span class="icon-label">
+                <svg class="ui-icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                  <rect x="1" y="5" width="15" height="14"></rect>
+                </svg>
+                Upload Demo Video to 3D Screen
+              </span>
+            </label>
             <div class="btn btn-secondary file-upload-btn">
+              <svg class="ui-icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
               <span>Choose Video...</span>
               <input type="file" id="mobile-video-input" accept="video/mp4,video/quicktime,video/webm">
             </div>
-            <span class="subtitle" id="mobile-video-name" style="text-align: center;">No video chosen</span>
+            <span class="subtitle" id="mobile-video-name" style="text-align: center; justify-content: center;">No video chosen</span>
           </div>
         </div>
 
         <!-- 4. iPhone 17 Pro Finish & Staging -->
         <div class="panel">
-          <span class="panel-title">4. iPhone 17 Pro Finish &amp; Staging</span>
+          <span class="panel-title">
+            <svg class="ui-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M12 2a10 10 0 0 1 10 10H2a10 10 0 0 1 10-10z"></path>
+            </svg>
+            <span>iPhone 17 Pro Finish &amp; Staging</span>
+          </span>
           
           <div class="control-group">
-            <label class="control-label">Titanium Finish</label>
+            <label class="control-label">
+              <span class="icon-label">
+                <svg class="ui-icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="13.5" cy="6.5" r=".5"></circle>
+                  <circle cx="17.5" cy="10.5" r=".5"></circle>
+                  <circle cx="8.5" cy="7.5" r=".5"></circle>
+                  <circle cx="6.5" cy="12.5" r=".5"></circle>
+                  <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.563-2.512 5.563-5.562C22 6.5 17.5 2 12 2z"></path>
+                </svg>
+                Titanium Finish
+              </span>
+            </label>
             <div class="finish-swatches" id="mobile-finish-picker">
               <div class="finish-chip active" data-finish="natural" title="Natural Titanium">
                 <div class="finish-dot" style="background: linear-gradient(135deg, #a8a49d, #78746e);"></div>
@@ -147,10 +260,24 @@
           </div>
 
           <div class="control-group" style="margin-top: 6px;">
-            <label class="control-label">Studio Background Style</label>
+            <label class="control-label">
+              <span class="icon-label">
+                <svg class="ui-icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="5"></circle>
+                  <line x1="12" y1="1" x2="12" y2="3"></line>
+                  <line x1="12" y1="21" x2="12" y2="23"></line>
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                  <line x1="1" y1="12" x2="3" y2="12"></line>
+                  <line x1="21" y1="12" x2="23" y2="12"></line>
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
+                Studio Background Style
+              </span>
+            </label>
             <select id="mobile-bg-preset">
-              <option value="dark-slate">Deep Slate Gradient (Default)</option>
-              <option value="cyberpunk">Cyberpunk Neon Ambient</option>
+              <option value="dark-slate">Studio Dark (Default)</option>
               <option value="minimal-light">Studio Soft Light</option>
               <option value="pure-black">OLED Pure Black</option>
             </select>
@@ -161,18 +288,39 @@
 
       <!-- Telemetry Live Stream -->
       <div class="panel">
-        <span class="panel-title" style="font-size: 0.75rem;">Device Orientation Telemetry</span>
+        <span class="panel-title" style="font-size: 0.75rem;">
+          <svg class="ui-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+          </svg>
+          <span>Device Orientation Telemetry</span>
+        </span>
         <div class="telemetry-grid">
           <div class="telemetry-card">
-            <span class="telemetry-label">Alpha (Yaw)</span>
+            <span class="telemetry-label">
+              <svg class="ui-icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+              </svg>
+              Alpha (Yaw)
+            </span>
             <span id="val-alpha" class="telemetry-value">0°</span>
           </div>
           <div class="telemetry-card">
-            <span class="telemetry-label">Beta (Pitch)</span>
+            <span class="telemetry-label">
+              <svg class="ui-icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2v20"></path>
+                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+              </svg>
+              Beta (Pitch)
+            </span>
             <span id="val-beta" class="telemetry-value">0°</span>
           </div>
           <div class="telemetry-card">
-            <span class="telemetry-label">Gamma (Roll)</span>
+            <span class="telemetry-label">
+              <svg class="ui-icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M23 4v6h-6M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+              </svg>
+              Gamma (Roll)
+            </span>
             <span id="val-gamma" class="telemetry-value">0°</span>
           </div>
         </div>
@@ -181,7 +329,21 @@
 
     <!-- Footer -->
     <div class="mobile-footer">
-      <p id="device-info">Sensors inactive</p>
+      <p id="device-info" style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+        <svg class="ui-icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="4" y="4" width="16" height="16"></rect>
+          <rect x="9" y="9" width="6" height="6"></rect>
+          <line x1="9" y1="1" x2="9" y2="4"></line>
+          <line x1="15" y1="1" x2="15" y2="4"></line>
+          <line x1="9" y1="20" x2="9" y2="23"></line>
+          <line x1="15" y1="20" x2="15" y2="23"></line>
+          <line x1="20" y1="9" x2="23" y2="9"></line>
+          <line x1="20" y1="14" x2="23" y2="14"></line>
+          <line x1="1" y1="9" x2="4" y2="9"></line>
+          <line x1="1" y1="14" x2="4" y2="14"></line>
+        </svg>
+        <span>Sensors inactive</span>
+      </p>
     </div>
   </div>
 
@@ -494,6 +656,8 @@
       isTracking = true;
       trackBtn.classList.add('active');
       trackBtnText.innerText = 'Tracking active';
+      const trackIndicator = document.getElementById('track-indicator');
+      if (trackIndicator) trackIndicator.innerText = 'LIVE';
       if (phoneCalibrateBtn) phoneCalibrateBtn.style.display = 'inline-flex';
       updateStatus('streaming', 'Streaming');
       deviceInfo.innerText = 'Streaming device orientation...';
@@ -504,6 +668,8 @@
       isTracking = false;
       trackBtn.classList.remove('active');
       trackBtnText.innerText = 'Enable Motion';
+      const trackIndicator = document.getElementById('track-indicator');
+      if (trackIndicator) trackIndicator.innerText = 'STANDBY';
       if (phoneCalibrateBtn) phoneCalibrateBtn.style.display = 'none';
       if (activeConn && activeConn.open) {
         updateStatus('connected', 'Connected');
@@ -610,9 +776,7 @@
         }
 
         shareBtn.classList.add('active');
-        shareBtnText.innerText = 'Sharing Screen';
-        shareBtn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
-        shareBtn.style.boxShadow = '0 0 25px rgba(16, 185, 129, 0.5)';
+        shareBtnText.innerText = 'Stop Share';
         
         // Handle screen share stopped via browser native stop button
         screenStream.getVideoTracks()[0].onended = () => {
@@ -662,8 +826,6 @@
       }
       shareBtn.classList.remove('active');
       shareBtnText.innerText = 'Share Screen';
-      shareBtn.style.background = 'linear-gradient(135deg, #a855f7 0%, #7e22ce 100%)';
-      shareBtn.style.boxShadow = '0 0 20px rgba(168, 85, 247, 0.4)';
     }
 
     // Camera Sharing Setup
@@ -714,9 +876,7 @@
         }
 
         cameraBtn.classList.add('active');
-        cameraBtnText.innerText = 'Sharing Camera';
-        cameraBtn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
-        cameraBtn.style.boxShadow = '0 0 25px rgba(16, 185, 129, 0.5)';
+        cameraBtnText.innerText = 'Stop Camera';
       } catch (err) {
         console.error('Error starting camera share:', err);
         alert(`Could not access camera.\nError: ${err.name} - ${err.message}\n\nPlease ensure you grant camera permissions.`);
@@ -761,8 +921,6 @@
       }
       cameraBtn.classList.remove('active');
       cameraBtnText.innerText = 'Share Camera';
-      cameraBtn.style.background = 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)';
-      cameraBtn.style.boxShadow = '0 0 20px rgba(59, 130, 246, 0.4)';
     }
 
     // ----------------------------------------------------
