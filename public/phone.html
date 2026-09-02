@@ -349,7 +349,6 @@
             console.log('Host accepted pairing request!');
             updateStatus('connected', 'Connected');
             pairingSection.style.display = 'none';
-            trackingSection.style.display = 'block';
             trackingSection.style.display = 'flex';
             if (remoteControlSection) remoteControlSection.style.display = 'flex';
             deviceInfo.innerText = 'Connected via WebRTC. Ready to stream.';

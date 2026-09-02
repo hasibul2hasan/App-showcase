@@ -544,17 +544,11 @@ select:focus {
   width: 100vw;
   max-width: 480px;
   height: 100vh;
-  min-height: 100vh;
   margin: 0 auto;
   padding: 24px;
   justify-content: space-between;
-  padding: 20px 16px 40px 16px;
-  justify-content: flex-start;
   align-items: center;
   position: relative;
-  box-sizing: border-box;
-  overflow-y: auto;
-  gap: 16px;
 }
 
 .mobile-card {
@@ -565,15 +559,11 @@ select:focus {
   border: 1px solid var(--panel-border);
   border-radius: 20px;
   padding: 24px;
-  padding: 20px;
   display: flex;
   flex-direction: column;
   gap: 20px;
-  gap: 16px;
   box-shadow: var(--shadow-lg);
   margin: auto 0;
-  margin: 0;
-  box-sizing: border-box;
 }
 
 /* Big Glowing Enable Button */
