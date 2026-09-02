@@ -575,23 +575,40 @@
 
             // Handle binary blob / ArrayBuffer for screen / camera mirror
             if (data instanceof Blob || data instanceof ArrayBuffer || (data && data.byteLength)) {
-              if (currentScreenType === 'mirror') {
-                const blob = (data instanceof Blob) ? data : new Blob([data], { type: 'image/jpeg' });
-                const url = URL.createObjectURL(blob);
-                const img = new Image();
-                img.onload = () => {
+              const blob = (data instanceof Blob) ? data : new Blob([data], { type: 'image/jpeg' });
+              const url = URL.createObjectURL(blob);
+              const img = new Image();
+              img.onload = () => {
+                lastCameraImage = img;
+                if (currentScreenType === 'camera') {
+                  renderCameraCanvas();
+                } else if (currentScreenType === 'mirror') {
                   if (canvasCtx && clockCanvasTexture) {
                     canvasCtx.drawImage(img, 0, 0, canvasElement.width, canvasElement.height);
                     clockCanvasTexture.needsUpdate = true;
                   }
-                  URL.revokeObjectURL(url);
-                };
-                img.src = url;
-              }
+                }
+                URL.revokeObjectURL(url);
+              };
+              img.src = url;
               return;
             }
 
-            if (payload && payload.type === 'orientation') {
+            if (payload && payload.type === 'camera_mode') {
+              console.log('Remote camera mode toggle:', payload.active, 'facing:', payload.facing);
+              if (payload.facing) cameraFacingMode = payload.facing;
+              if (payload.active) {
+                applyCameraTexture();
+              } else {
+                applyClockTexture();
+              }
+            } else if (payload && payload.type === 'camera_facing') {
+              console.log('Remote camera facing set:', payload.facing);
+              if (payload.facing) cameraFacingMode = payload.facing;
+              if (currentScreenType === 'camera') {
+                renderCameraCanvas();
+              }
+            } else if (payload && payload.type === 'orientation') {
               lastSensorActivity = Date.now();
               if (!isPhoneStreaming) {
                 isPhoneStreaming = true;
@@ -669,25 +686,32 @@
         // Also handle incoming WebRTC direct media calls (for screen / camera video streams)
         peer.on('call', (call) => {
           if (!isConfirmed) return;
-          console.log('Incoming WebRTC media call');
+          console.log('Incoming WebRTC media call for camera/screen');
           call.answer(); // Answer with no stream back
           call.on('stream', (remoteStream) => {
-            console.log('Received remote media stream');
-            const remoteVideo = document.createElement('video');
-            remoteVideo.srcObject = remoteStream;
-            remoteVideo.autoplay = true;
-            remoteVideo.playsInline = true;
-            remoteVideo.muted = true;
-            remoteVideo.onloadedmetadata = () => {
-              remoteVideo.play();
+            console.log('Received remote media stream from paired device');
+            remoteCameraStream = remoteStream;
+            if (!remoteCameraVideo) {
+              remoteCameraVideo = document.createElement('video');
+              remoteCameraVideo.autoplay = true;
+              remoteCameraVideo.playsInline = true;
+              remoteCameraVideo.muted = true;
+            }
+            remoteCameraVideo.srcObject = remoteStream;
+            remoteCameraVideo.onloadedmetadata = () => {
+              remoteCameraVideo.play().catch(console.error);
             };
 
+            applyCameraTexture();
+
             const streamToCanvas = () => {
-              if (currentScreenType === 'mirror' && canvasCtx && remoteVideo.readyState >= 2 && clockCanvasTexture) {
-                canvasCtx.drawImage(remoteVideo, 0, 0, canvasElement.width, canvasElement.height);
+              if (currentScreenType === 'camera') {
+                renderCameraCanvas();
+              } else if (currentScreenType === 'mirror' && canvasCtx && remoteCameraVideo.readyState >= 2 && clockCanvasTexture) {
+                canvasCtx.drawImage(remoteCameraVideo, 0, 0, canvasElement.width, canvasElement.height);
                 clockCanvasTexture.needsUpdate = true;
               }
-              if (remoteStream.active) {
+              if (remoteStream.active && (currentScreenType === 'camera' || currentScreenType === 'mirror')) {
                 requestAnimationFrame(streamToCanvas);
               }
             };
@@ -815,6 +839,10 @@
     let activeVideoElement = null; // Video element
     let activeLocalStream = null;  // Local screen share stream
     let demoVideoLoopId = null;
+    let remoteCameraVideo = null;  // Paired mobile camera video stream
+    let remoteCameraStream = null;
+    let lastCameraImage = null;    // Fallback frame from pair device
+    let cameraFacingMode = 'environment'; // 'environment' (rear) or 'user' (front)
     
     const container = document.getElementById('canvas-container');
 
@@ -2152,6 +2180,465 @@
       clockCanvasTexture.needsUpdate = true;
     }
 
+    // ----------------------------------------------------
+    // iPhone Camera App Mode (Live Paired Device Camera UI)
+    // ----------------------------------------------------
+    function applyCameraTexture() {
+      currentScreenType = 'camera';
+      cleanupVideo();
+      if (clockCanvasTexture) {
+        updateAllScreenMeshes(clockCanvasTexture);
+        renderCameraCanvas();
+      }
+    }
+
+    function renderCameraCanvas() {
+      if (currentScreenType !== 'camera' || !canvasCtx || !clockCanvasTexture) return;
+
+      const w = canvasElement.width;
+      const h = canvasElement.height;
+      const timeNow = Date.now();
+      const t = timeNow / 1000;
+
+      // ========================================================
+      // 1. OLED Black Camera Frame Background
+      // ========================================================
+      canvasCtx.fillStyle = '#000000';
+      canvasCtx.fillRect(0, 0, w, h);
+
+      // ========================================================
+      // 2. Camera Viewfinder (Live Video Stream from Paired Device)
+      // ========================================================
+      const vy = 112;
+      const vh = 750;
+      const vw = w;
+
+      canvasCtx.save();
+      canvasCtx.beginPath();
+      canvasCtx.rect(0, vy, vw, vh);
+      canvasCtx.clip();
+
+      let hasFrame = false;
+
+      if (remoteCameraVideo && remoteCameraVideo.readyState >= 2) {
+        const vid = remoteCameraVideo;
+        const srcW = vid.videoWidth || 480;
+        const srcH = vid.videoHeight || 640;
+        const srcAspect = srcW / srcH;
+        const targetAspect = vw / vh;
+        let drawW, drawH, drawX, drawY;
+
+        if (srcAspect > targetAspect) {
+          drawH = vh;
+          drawW = vh * srcAspect;
+          drawX = (vw - drawW) / 2;
+          drawY = vy;
+        } else {
+          drawW = vw;
+          drawH = vw / srcAspect;
+          drawX = 0;
+          drawY = vy + (vh - drawH) / 2;
+        }
+
+        // Mirror horizontally if using front selfie camera (like native iOS Camera)
+        if (cameraFacingMode === 'user') {
+          canvasCtx.save();
+          canvasCtx.translate(vw, 0);
+          canvasCtx.scale(-1, 1);
+          canvasCtx.drawImage(vid, drawX, drawY, drawW, drawH);
+          canvasCtx.restore();
+        } else {
+          canvasCtx.drawImage(vid, drawX, drawY, drawW, drawH);
+        }
+        hasFrame = true;
+      } else if (lastCameraImage && lastCameraImage.complete && lastCameraImage.naturalWidth > 0) {
+        const img = lastCameraImage;
+        const srcW = img.naturalWidth || 480;
+        const srcH = img.naturalHeight || 640;
+        const srcAspect = srcW / srcH;
+        const targetAspect = vw / vh;
+        let drawW, drawH, drawX, drawY;
+
+        if (srcAspect > targetAspect) {
+          drawH = vh;
+          drawW = vh * srcAspect;
+          drawX = (vw - drawW) / 2;
+          drawY = vy;
+        } else {
+          drawW = vw;
+          drawH = vw / srcAspect;
+          drawX = 0;
+          drawY = vy + (vh - drawH) / 2;
+        }
+
+        // Mirror horizontally if using front selfie camera
+        if (cameraFacingMode === 'user') {
+          canvasCtx.save();
+          canvasCtx.translate(vw, 0);
+          canvasCtx.scale(-1, 1);
+          canvasCtx.drawImage(img, drawX, drawY, drawW, drawH);
+          canvasCtx.restore();
+        } else {
+          canvasCtx.drawImage(img, drawX, drawY, drawW, drawH);
+        }
+        hasFrame = true;
+      } else {
+        // Standby Viewfinder Screen
+        const standbyGrad = canvasCtx.createLinearGradient(0, vy, 0, vy + vh);
+        standbyGrad.addColorStop(0, '#080c14');
+        standbyGrad.addColorStop(0.5, '#101622');
+        standbyGrad.addColorStop(1, '#060910');
+        canvasCtx.fillStyle = standbyGrad;
+        canvasCtx.fillRect(0, vy, vw, vh);
+
+        // Animated Standby Reticle
+        const retPulse = 26 + Math.sin(t * 3) * 6;
+        canvasCtx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
+        canvasCtx.lineWidth = 1.5;
+        canvasCtx.beginPath();
+        canvasCtx.arc(w / 2, vy + vh / 2 - 30, retPulse, 0, Math.PI * 2);
+        canvasCtx.stroke();
+
+        // Standby Text
+        canvasCtx.fillStyle = '#ffffff';
+        canvasCtx.font = '700 16px -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif';
+        canvasCtx.textAlign = 'center';
+        canvasCtx.fillText('CONNECTING TO MOBILE CAMERA...', w / 2, vy + vh / 2 + 20);
+
+        canvasCtx.fillStyle = '#38bdf8';
+        canvasCtx.font = '500 12px -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif';
+        canvasCtx.fillText('Live WebRTC Stream Initializing', w / 2, vy + vh / 2 + 42);
+      }
+
+      // Subtle Rule-of-Thirds Composition Grid
+      canvasCtx.strokeStyle = 'rgba(255, 255, 255, 0.09)';
+      canvasCtx.lineWidth = 1;
+      canvasCtx.beginPath();
+      canvasCtx.moveTo(0, vy + vh / 3);
+      canvasCtx.lineTo(vw, vy + vh / 3);
+      canvasCtx.moveTo(0, vy + 2 * vh / 3);
+      canvasCtx.lineTo(vw, vy + 2 * vh / 3);
+      canvasCtx.moveTo(vw / 3, vy);
+      canvasCtx.lineTo(vw / 3, vy + vh);
+      canvasCtx.moveTo(2 * vw / 3, vy);
+      canvasCtx.lineTo(2 * vw / 3, vy + vh);
+      canvasCtx.stroke();
+
+      // Signature Apple Yellow Focus Reticle
+      if (hasFrame) {
+        const focX = w / 2;
+        const focY = vy + vh / 2 - 20;
+        const focS = 64;
+        const cornerL = 14;
+
+        canvasCtx.save();
+        canvasCtx.strokeStyle = '#eab308';
+        canvasCtx.lineWidth = 1.5;
+
+        // 4 corner brackets
+        // Top-Left
+        canvasCtx.beginPath();
+        canvasCtx.moveTo(focX - focS/2, focY - focS/2 + cornerL);
+        canvasCtx.lineTo(focX - focS/2, focY - focS/2);
+        canvasCtx.lineTo(focX - focS/2 + cornerL, focY - focS/2);
+        // Top-Right
+        canvasCtx.moveTo(focX + focS/2 - cornerL, focY - focS/2);
+        canvasCtx.lineTo(focX + focS/2, focY - focS/2);
+        canvasCtx.lineTo(focX + focS/2, focY - focS/2 + cornerL);
+        // Bottom-Right
+        canvasCtx.moveTo(focX + focS/2, focY + focS/2 - cornerL);
+        canvasCtx.lineTo(focX + focS/2, focY + focS/2);
+        canvasCtx.lineTo(focX + focS/2 - cornerL, focY + focS/2);
+        // Bottom-Left
+        canvasCtx.moveTo(focX - focS/2 + cornerL, focY + focS/2);
+        canvasCtx.lineTo(focX - focS/2, focY + focS/2);
+        canvasCtx.lineTo(focX - focS/2, focY + focS/2 - cornerL);
+        canvasCtx.stroke();
+
+        // Sun exposure indicator to the right of focus box
+        const sunX = focX + focS/2 + 14;
+        const sunY = focY;
+        canvasCtx.fillStyle = '#eab308';
+        canvasCtx.beginPath();
+        canvasCtx.arc(sunX, sunY, 3, 0, Math.PI * 2);
+        canvasCtx.fill();
+        canvasCtx.lineWidth = 1.2;
+        canvasCtx.beginPath();
+        canvasCtx.moveTo(sunX, sunY - 18);
+        canvasCtx.lineTo(sunX, sunY + 18);
+        canvasCtx.stroke();
+        canvasCtx.restore();
+      }
+
+      // Zoom Selection Pills (.5, 1x, 2, 5)
+      const zoomW = 210;
+      const zoomH = 34;
+      const zoomX = (w - zoomW) / 2;
+      const zoomY = vy + vh - 48;
+
+      canvasCtx.fillStyle = 'rgba(0, 0, 0, 0.58)';
+      canvasCtx.beginPath();
+      canvasCtx.roundRect(zoomX, zoomY, zoomW, zoomH, zoomH / 2);
+      canvasCtx.fill();
+      canvasCtx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+      canvasCtx.lineWidth = 1;
+      canvasCtx.stroke();
+
+      // Zoom Options
+      canvasCtx.font = '600 12px -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif';
+      canvasCtx.textAlign = 'center';
+      
+      // .5
+      canvasCtx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+      canvasCtx.fillText('.5', zoomX + 30, zoomY + 22);
+
+      // 1x (Active Golden Circle)
+      canvasCtx.fillStyle = '#eab308';
+      canvasCtx.beginPath();
+      canvasCtx.arc(zoomX + 80, zoomY + zoomH/2, 13, 0, Math.PI * 2);
+      canvasCtx.fill();
+      canvasCtx.fillStyle = '#000000';
+      canvasCtx.font = 'bold 12px -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif';
+      canvasCtx.fillText('1x', zoomX + 80, zoomY + 22);
+
+      // 2
+      canvasCtx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+      canvasCtx.font = '600 12px -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif';
+      canvasCtx.fillText('2', zoomX + 132, zoomY + 22);
+
+      // 5
+      canvasCtx.fillText('5', zoomX + 180, zoomY + 22);
+
+      canvasCtx.restore();
+
+      // ========================================================
+      // 3. Top Control Bar (Dynamic Island & Camera Settings)
+      // ========================================================
+      // Dynamic Island Pill
+      const diW = 164;
+      const diH = 32;
+      const diX = (w - diW) / 2;
+      const diY = 18;
+
+      canvasCtx.fillStyle = '#000000';
+      canvasCtx.beginPath();
+      canvasCtx.roundRect(diX, diY, diW, diH, diH / 2);
+      canvasCtx.fill();
+      canvasCtx.strokeStyle = 'rgba(255, 255, 255, 0.18)';
+      canvasCtx.lineWidth = 1;
+      canvasCtx.stroke();
+
+      // Left: FaceTime Camera Lens
+      canvasCtx.fillStyle = '#1e1b4b';
+      canvasCtx.beginPath();
+      canvasCtx.arc(diX + 18, diY + diH/2, 5, 0, Math.PI * 2);
+      canvasCtx.fill();
+      canvasCtx.fillStyle = '#38bdf8';
+      canvasCtx.beginPath();
+      canvasCtx.arc(diX + 17, diY + diH/2 - 1.5, 1.5, 0, Math.PI * 2);
+      canvasCtx.fill();
+
+      // Right: Active Green Privacy Camera Dot (Active sensor indicator)
+      canvasCtx.fillStyle = '#22c55e';
+      canvasCtx.beginPath();
+      canvasCtx.arc(diX + diW - 16, diY + diH/2, 3, 0, Math.PI * 2);
+      canvasCtx.fill();
+      // Subtle pulsing halo
+      const haloAlpha = 0.25 + Math.sin(t * 3) * 0.15;
+      canvasCtx.fillStyle = `rgba(34, 197, 94, ${haloAlpha})`;
+      canvasCtx.beginPath();
+      canvasCtx.arc(diX + diW - 16, diY + diH/2, 6, 0, Math.PI * 2);
+      canvasCtx.fill();
+
+      // Quick Settings Top Row (y = 74)
+      const topY = 74;
+
+      // Flash Button (Left)
+      canvasCtx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+      canvasCtx.lineWidth = 1.2;
+      canvasCtx.beginPath();
+      canvasCtx.arc(42, topY, 15, 0, Math.PI * 2);
+      canvasCtx.stroke();
+      // Flash Bolt
+      canvasCtx.fillStyle = '#ffffff';
+      canvasCtx.beginPath();
+      canvasCtx.moveTo(42, topY - 8);
+      canvasCtx.lineTo(38, topY);
+      canvasCtx.lineTo(43, topY);
+      canvasCtx.lineTo(41, topY + 8);
+      canvasCtx.lineTo(47, topY - 1);
+      canvasCtx.lineTo(42, topY - 1);
+      canvasCtx.closePath();
+      canvasCtx.fill();
+
+      // Night Mode Button
+      canvasCtx.beginPath();
+      canvasCtx.arc(98, topY, 15, 0, Math.PI * 2);
+      canvasCtx.stroke();
+      canvasCtx.fillStyle = '#ffffff';
+      canvasCtx.font = '500 11px -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif';
+      canvasCtx.textAlign = 'center';
+      canvasCtx.fillText('1s', 98, topY + 4);
+
+      // Camera Lens Pill (Center)
+      canvasCtx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+      canvasCtx.beginPath();
+      canvasCtx.roundRect(w / 2 - 56, topY - 13, 112, 26, 13);
+      canvasCtx.fill();
+      canvasCtx.strokeStyle = (cameraFacingMode === 'user') ? '#38bdf8' : 'rgba(255, 255, 255, 0.22)';
+      canvasCtx.lineWidth = 1;
+      canvasCtx.stroke();
+      canvasCtx.fillStyle = (cameraFacingMode === 'user') ? '#38bdf8' : '#ffffff';
+      canvasCtx.font = '700 11px -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif';
+      canvasCtx.textAlign = 'center';
+      canvasCtx.fillText((cameraFacingMode === 'user') ? 'FRONT 12MP' : '48MP FUSION', w / 2, topY + 4);
+
+      // Exposure Control (±)
+      canvasCtx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+      canvasCtx.lineWidth = 1.2;
+      canvasCtx.beginPath();
+      canvasCtx.arc(w - 98, topY, 15, 0, Math.PI * 2);
+      canvasCtx.stroke();
+      canvasCtx.fillStyle = '#ffffff';
+      canvasCtx.font = '600 13px -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif';
+      canvasCtx.fillText('±', w - 98, topY + 4.5);
+
+      // Live Photo (Concentric Rings)
+      canvasCtx.beginPath();
+      canvasCtx.arc(w - 42, topY, 15, 0, Math.PI * 2);
+      canvasCtx.stroke();
+      canvasCtx.fillStyle = '#ffffff';
+      canvasCtx.beginPath();
+      canvasCtx.arc(w - 42, topY, 4, 0, Math.PI * 2);
+      canvasCtx.fill();
+      canvasCtx.lineWidth = 1;
+      canvasCtx.beginPath();
+      canvasCtx.arc(w - 42, topY, 9, 0, Math.PI * 2);
+      canvasCtx.stroke();
+
+      // ========================================================
+      // 4. Mode Carousel Bar
+      // ========================================================
+      const modeY = 896;
+      canvasCtx.font = '700 12px -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif';
+      canvasCtx.textAlign = 'center';
+
+      canvasCtx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+      canvasCtx.fillText('CINEMATIC', 50, modeY);
+
+      canvasCtx.fillStyle = 'rgba(255, 255, 255, 0.65)';
+      canvasCtx.fillText('VIDEO', 150, modeY);
+
+      // PHOTO (Signature Apple Yellow)
+      canvasCtx.fillStyle = '#eab308';
+      canvasCtx.font = 'bold 13px -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif';
+      canvasCtx.fillText('PHOTO', w / 2, modeY);
+      // Small yellow indicator dot
+      canvasCtx.beginPath();
+      canvasCtx.arc(w / 2, modeY + 14, 2, 0, Math.PI * 2);
+      canvasCtx.fill();
+
+      canvasCtx.fillStyle = 'rgba(255, 255, 255, 0.65)';
+      canvasCtx.font = '700 12px -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif';
+      canvasCtx.fillText('PORTRAIT', 362, modeY);
+
+      canvasCtx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+      canvasCtx.fillText('PANO', 460, modeY);
+
+      // ========================================================
+      // 5. Bottom Control Bar (Shutter, Gallery Thumbnail, Camera Flip)
+      // ========================================================
+      const ctlY = 1000;
+
+      // Gallery Thumbnail Box (Left)
+      const galSize = 52;
+      const galX = 72;
+      canvasCtx.save();
+      canvasCtx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+      canvasCtx.beginPath();
+      canvasCtx.roundRect(galX - galSize/2, ctlY - galSize/2, galSize, galSize, 10);
+      canvasCtx.fill();
+      canvasCtx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+      canvasCtx.lineWidth = 1.5;
+      canvasCtx.stroke();
+      // Mini picture icon inside gallery box
+      canvasCtx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+      canvasCtx.beginPath();
+      canvasCtx.arc(galX - 10, ctlY - 10, 4, 0, Math.PI * 2);
+      canvasCtx.fill();
+      canvasCtx.beginPath();
+      canvasCtx.moveTo(galX - 18, ctlY + 14);
+      canvasCtx.lineTo(galX - 4, ctlY - 2);
+      canvasCtx.lineTo(galX + 6, ctlY + 8);
+      canvasCtx.lineTo(galX + 12, ctlY + 2);
+      canvasCtx.lineTo(galX + 18, ctlY + 14);
+      canvasCtx.closePath();
+      canvasCtx.fill();
+      canvasCtx.restore();
+
+      // Iconic Apple Camera Shutter Button (Center)
+      const shutX = w / 2;
+      // Outer Ring
+      canvasCtx.strokeStyle = '#ffffff';
+      canvasCtx.lineWidth = 3.5;
+      canvasCtx.beginPath();
+      canvasCtx.arc(shutX, ctlY, 38, 0, Math.PI * 2);
+      canvasCtx.stroke();
+      // Inner Solid Disc
+      canvasCtx.fillStyle = '#ffffff';
+      canvasCtx.beginPath();
+      canvasCtx.arc(shutX, ctlY, 31, 0, Math.PI * 2);
+      canvasCtx.fill();
+
+      // Camera Flip Button (Right)
+      const flipX = w - 72;
+      const isFront = (cameraFacingMode === 'user');
+      canvasCtx.save();
+      canvasCtx.fillStyle = isFront ? 'rgba(2, 132, 199, 0.35)' : 'rgba(255, 255, 255, 0.18)';
+      canvasCtx.beginPath();
+      canvasCtx.arc(flipX, ctlY, 26, 0, Math.PI * 2);
+      canvasCtx.fill();
+      canvasCtx.strokeStyle = isFront ? '#38bdf8' : 'rgba(255, 255, 255, 0.3)';
+      canvasCtx.lineWidth = 1.2;
+      canvasCtx.stroke();
+
+      // Curved Dual Arrows
+      canvasCtx.strokeStyle = isFront ? '#38bdf8' : '#ffffff';
+      canvasCtx.lineWidth = 2;
+      canvasCtx.lineCap = 'round';
+      canvasCtx.beginPath();
+      canvasCtx.arc(flipX, ctlY, 13, Math.PI * 0.15, Math.PI * 0.85);
+      canvasCtx.stroke();
+      // Arrowhead 1
+      canvasCtx.beginPath();
+      canvasCtx.moveTo(flipX + 11, ctlY + 11);
+      canvasCtx.lineTo(flipX + 15, ctlY + 7);
+      canvasCtx.lineTo(flipX + 8, ctlY + 5);
+      canvasCtx.stroke();
+
+      canvasCtx.beginPath();
+      canvasCtx.arc(flipX, ctlY, 13, Math.PI * 1.15, Math.PI * 1.85);
+      canvasCtx.stroke();
+      // Arrowhead 2
+      canvasCtx.beginPath();
+      canvasCtx.moveTo(flipX - 11, ctlY - 11);
+      canvasCtx.lineTo(flipX - 15, ctlY - 7);
+      canvasCtx.lineTo(flipX - 8, ctlY - 5);
+      canvasCtx.stroke();
+      canvasCtx.restore();
+
+      // ========================================================
+      // 6. Home Indicator Bar
+      // ========================================================
+      canvasCtx.fillStyle = '#ffffff';
+      canvasCtx.beginPath();
+      canvasCtx.roundRect((w - 140) / 2, h - 22, 140, 4.5, 2.25);
+      canvasCtx.fill();
+
+      // Trigger WebGL texture update
+      clockCanvasTexture.needsUpdate = true;
+    }
+
     function applyClockTexture() {
       currentScreenType = 'clock';
       cleanupVideo();
@@ -2391,14 +2878,63 @@
     });
 
     // ----------------------------------------------------
+    // Raycaster for 3D Screen Interactive Touch Controls
+    // (e.g. Tapping the Camera Flip Button on the 3D Model)
+    // ----------------------------------------------------
+    const screenRaycaster = new THREE.Raycaster();
+    const screenPointerCoord = new THREE.Vector2();
+    let isDragging3D = false;
+    let pointerDownPos = { x: 0, y: 0 };
+
+    if (container) {
+      container.addEventListener('pointerdown', (e) => {
+        pointerDownPos.x = e.clientX;
+        pointerDownPos.y = e.clientY;
+        isDragging3D = false;
+      });
+
+      container.addEventListener('pointermove', (e) => {
+        const dx = Math.abs(e.clientX - pointerDownPos.x);
+        const dy = Math.abs(e.clientY - pointerDownPos.y);
+        if (dx > 6 || dy > 6) {
+          isDragging3D = true;
+        }
+      });
+
+      container.addEventListener('pointerup', (e) => {
+        if (isDragging3D) return;
+        if (currentScreenType !== 'camera' || !screenMesh) return;
+
+        const rect = renderer.domElement.getBoundingClientRect();
+        screenPointerCoord.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        screenPointerCoord.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+        screenRaycaster.setFromCamera(screenPointerCoord, camera);
+        const intersects = screenRaycaster.intersectObject(screenMesh);
+        if (intersects.length > 0 && intersects[0].uv) {
+          const uv = intersects[0].uv;
+          // In UV space: Flip button is at x ~ 0.86, y ~ 0.107
+          if (uv.x >= 0.74 && uv.x <= 0.96 && uv.y >= 0.04 && uv.y <= 0.18) {
+            console.log('3D Screen Camera Flip button clicked! Sending flip_camera...');
+            if (activeConn && activeConn.open) {
+              activeConn.send({ type: 'flip_camera' });
+            }
+          }
+        }
+      });
+    }
+
+    // ----------------------------------------------------
     // Rendering & Smooth Slerp Damping Loops
     // ----------------------------------------------------
     function animate() {
       requestAnimationFrame(animate);
 
-      // 1. Process fallback clock screen texture updates
+      // 1. Process screen texture updates
       if (currentScreenType === 'clock') {
         renderClockCanvas();
+      } else if (currentScreenType === 'camera') {
+        renderCameraCanvas();
       }
 
       // 2. Smoothly rotate the phone group based on current target rotation

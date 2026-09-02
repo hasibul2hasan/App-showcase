@@ -174,10 +174,23 @@
                 </svg>
                 <span class="controller-tile-title">Camera</span>
               </div>
+              <span class="controller-indicator" id="camera-lens-indicator" style="display: none; color: #38bdf8; border-color: rgba(56, 189, 248, 0.4);">REAR</span>
             </div>
             <span class="controller-tile-desc" id="camera-btn-text">Share Camera</span>
           </button>
         </div>
+
+        <!-- Active Camera Switch Controls (ONLY visible when camera is active) -->
+        <div id="active-camera-controls" style="display: none; width: 100%; margin-top: 6px;">
+          <!-- Dedicated "Switch Camera" Action Button -->
+          <button id="switch-camera-btn" class="btn btn-secondary" type="button" style="width: 100%; padding: 12px 14px; font-size: 0.84rem; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 0; background: #161a22; border: 1.5px solid #38bdf8; color: #ffffff; cursor: pointer; transition: all var(--transition-fast);">
+            <svg class="ui-icon-sm" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2">
+              <path d="M20 10c0-4.418-3.582-8-8-8s-8 3.582-8 8c0 1.93.684 3.7 1.824 5.09L4 19h5v-5l-1.78 1.78A5.96 5.96 0 0 1 6 10c0-3.314 2.686-6 6-6s6 2.686 6 6c0 1.657-.672 3.157-1.757 4.243l1.414 1.414A7.965 7.965 0 0 0 20 10z"></path>
+            </svg>
+            <span id="switch-camera-btn-text">Switch to Front Camera</span>
+          </button>
+        </div>
+
         <p class="subtitle" style="text-align: center; margin: 4px 0 0 0; justify-content: center;">Tap controls to toggle real-time sync</p>
       </div>
 
@@ -554,6 +567,9 @@
             }
           } else if (payload && (payload.type === 'sync_state' || payload.type === 'theme_changed')) {
             applySyncState(payload);
+          } else if (payload && payload.type === 'flip_camera') {
+            const nextFacing = (currentFacingMode === 'environment') ? 'user' : 'environment';
+            setCameraFacing(nextFacing);
           } else if (payload && payload.type === 'pair_rejected') {
             console.log('Host rejected pairing request.');
             document.body.classList.remove('is-paired');
@@ -932,12 +948,111 @@
       shareBtnText.innerText = 'Share Screen';
     }
 
-    // Camera Sharing Setup
+    // Camera Sharing & Lens Selection Setup
     const cameraBtn = document.getElementById('camera-btn');
     const cameraBtnText = document.getElementById('camera-btn-text');
+    const switchCameraBtn = document.getElementById('switch-camera-btn');
+    const switchCameraBtnText = document.getElementById('switch-camera-btn-text');
+    const activeCameraControls = document.getElementById('active-camera-controls');
+    const cameraLensIndicator = document.getElementById('camera-lens-indicator');
+
+    let currentFacingMode = 'environment'; // 'environment' (rear) or 'user' (front)
     let cameraStream = null;
     let cameraVideo = null;
     let cameraInterval = null;
+
+    if (switchCameraBtn) {
+      switchCameraBtn.addEventListener('click', async () => {
+        const nextMode = (currentFacingMode === 'environment') ? 'user' : 'environment';
+        await setCameraFacing(nextMode);
+      });
+    }
+
+    async function setCameraFacing(mode) {
+      currentFacingMode = mode;
+      updateLensButtonsUI();
+
+      if (cameraStream) {
+        await switchActiveCamera();
+      } else {
+        if (activeConn && activeConn.open) {
+          activeConn.send({ type: 'camera_facing', facing: currentFacingMode });
+        }
+      }
+    }
+
+    function updateLensButtonsUI() {
+      const isUser = (currentFacingMode === 'user');
+      if (switchCameraBtnText) {
+        switchCameraBtnText.innerText = isUser ? 'Switch to Rear Camera' : 'Switch to Front Camera';
+      }
+      if (cameraLensIndicator) {
+        cameraLensIndicator.innerText = isUser ? 'FRONT' : 'REAR';
+        cameraLensIndicator.style.color = isUser ? '#38bdf8' : '#94a3b8';
+        cameraLensIndicator.style.borderColor = isUser ? '#38bdf8' : 'rgba(148, 163, 184, 0.4)';
+      }
+    }
+
+    async function switchActiveCamera() {
+      try {
+        if (cameraStream) {
+          cameraStream.getTracks().forEach(track => track.stop());
+          cameraStream = null;
+        }
+
+        let newStream = null;
+        try {
+          newStream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              facingMode: currentFacingMode,
+              width: { ideal: 720 },
+              height: { ideal: 960 }
+            },
+            audio: false
+          });
+        } catch(errExact) {
+          newStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: currentFacingMode },
+            audio: false
+          });
+        }
+
+        cameraStream = newStream;
+        if (cameraVideo) {
+          cameraVideo.srcObject = cameraStream;
+          await cameraVideo.play().catch(console.error);
+        }
+
+        // Update WebRTC track if peer call is open
+        if (activeCall && activeCall.peerConnection) {
+          const videoTrack = cameraStream.getVideoTracks()[0];
+          const senders = activeCall.peerConnection.getSenders();
+          const videoSender = senders.find(s => s.track && s.track.kind === 'video');
+          if (videoSender && videoTrack) {
+            await videoSender.replaceTrack(videoTrack).catch(console.error);
+          } else if (peer && room) {
+            try { activeCall.close(); } catch(e) {}
+            activeCall = peer.call('omgmimiq-' + room, cameraStream);
+          }
+        } else if (peer && room) {
+          try {
+            if (activeCall) activeCall.close();
+            activeCall = peer.call('omgmimiq-' + room, cameraStream);
+          } catch(e) {}
+        }
+
+        if (activeConn && activeConn.open) {
+          activeConn.send({
+            type: 'camera_mode',
+            active: true,
+            facing: currentFacingMode
+          });
+        }
+      } catch (err) {
+        console.error('Error switching camera lens:', err);
+        alert(`Could not switch camera: ${err.message}`);
+      }
+    }
 
     cameraBtn.addEventListener('click', async () => {
       if (cameraStream) {
@@ -952,12 +1067,21 @@
       try {
         cameraStream = await navigator.mediaDevices.getUserMedia({
           video: {
-            facingMode: 'environment', // Use rear camera by default
-            width: { ideal: 480 },
-            height: { ideal: 640 }
+            facingMode: currentFacingMode,
+            width: { ideal: 720 },
+            height: { ideal: 960 }
           },
           audio: false
         });
+
+        // Notify 3D host to switch to iPhone Camera App UI with selected lens
+        if (activeConn && activeConn.open) {
+          activeConn.send({
+            type: 'camera_mode',
+            active: true,
+            facing: currentFacingMode
+          });
+        }
 
         cameraVideo = document.createElement('video');
         cameraVideo.srcObject = cameraStream;
@@ -981,6 +1105,8 @@
 
         cameraBtn.classList.add('active');
         cameraBtnText.innerText = 'Stop Camera';
+        if (activeCameraControls) activeCameraControls.style.display = 'flex';
+        if (cameraLensIndicator) cameraLensIndicator.style.display = 'inline-block';
       } catch (err) {
         console.error('Error starting camera share:', err);
         alert(`Could not access camera.\nError: ${err.name} - ${err.message}\n\nPlease ensure you grant camera permissions.`);
@@ -990,23 +1116,35 @@
 
     function startStreamingCamera() {
       const streamCanvas = document.createElement('canvas');
-      streamCanvas.width = 360;
-      streamCanvas.height = 480;
+      streamCanvas.width = 480;
+      streamCanvas.height = 640;
       const ctx = streamCanvas.getContext('2d');
 
+      if (cameraInterval) clearInterval(cameraInterval);
       cameraInterval = setInterval(() => {
-        if (activeConn && activeConn.open && cameraStream && cameraVideo.readyState >= 2) {
-          ctx.drawImage(cameraVideo, 0, 0, streamCanvas.width, streamCanvas.height);
+        if (activeConn && activeConn.open && cameraStream && cameraVideo && cameraVideo.readyState >= 2) {
+          if (currentFacingMode === 'user') {
+            ctx.save();
+            ctx.translate(streamCanvas.width, 0);
+            ctx.scale(-1, 1);
+            ctx.drawImage(cameraVideo, 0, 0, streamCanvas.width, streamCanvas.height);
+            ctx.restore();
+          } else {
+            ctx.drawImage(cameraVideo, 0, 0, streamCanvas.width, streamCanvas.height);
+          }
           streamCanvas.toBlob((blob) => {
             if (blob && activeConn && activeConn.open) {
               activeConn.send(blob);
             }
-          }, 'image/jpeg', 0.55); // Stream at 55% quality
+          }, 'image/jpeg', 0.65);
         }
-      }, 100); // 10 FPS
+      }, 70); // ~15 FPS reliable fallback streaming
     }
 
     function stopCameraShare() {
+      if (activeConn && activeConn.open) {
+        activeConn.send({ type: 'camera_mode', active: false });
+      }
       if (activeCall) {
         try { activeCall.close(); } catch(e) {}
         activeCall = null;
@@ -1025,6 +1163,8 @@
       }
       cameraBtn.classList.remove('active');
       cameraBtnText.innerText = 'Share Camera';
+      if (activeCameraControls) activeCameraControls.style.display = 'none';
+      if (cameraLensIndicator) cameraLensIndicator.style.display = 'none';
     }
 
     // ----------------------------------------------------
