@@ -27,9 +27,8 @@
 
   <!-- Floating Pairing Connection Window (Top Left) -->
   <div class="panel floating-pairing-widget" id="pairing-panel">
-    <span class="panel-title">1. Mobile Pairing Connection</span>
     <div class="pairing-code-container">
-      <span class="pairing-label">Pairing Room Code</span>
+      <span class="pairing-label">Pairing Code</span>
       <span class="pairing-code" id="display-room-code">----</span>
       <p class="subtitle">Scan QR code with your mobile device to pair:</p>
       <div id="qrcode"></div>
@@ -59,7 +58,7 @@
       </div>
     </div>
     <div class="status-row">
-      <span class="status-label">WebRTC Link:</span>
+      <span class="status-label">Connection:</span>
       <div class="status-indicator">
         <span class="status-dot disconnected" id="server-status-dot"></span>
         <span id="server-status-text">Connecting...</span>
@@ -436,7 +435,7 @@
         peer.on('open', (id) => {
           console.log('PeerJS signaling ready with ID:', id);
           serverDot.className = 'status-dot connected';
-          serverText.innerText = 'Ready (WebRTC)';
+          serverText.innerText = 'Ready';
         });
 
         peer.on('connection', (conn) => {
