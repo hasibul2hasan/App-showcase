@@ -2790,6 +2790,7 @@
         if (activeConn && activeConn.open) {
           activeConn.send({
             type: 'video_status',
+            hasVideo: true,
             buffering: true,
             ready: false,
             active: true
@@ -2842,6 +2843,7 @@
           if (activeConn && activeConn.open) {
             activeConn.send({
               type: 'video_status',
+              hasVideo: true,
               ready: true,
               buffering: false,
               active: true,
@@ -2864,6 +2866,16 @@
           }
         };
       } else {
+        if (activeConn && activeConn.open) {
+          activeConn.send({
+            type: 'video_status',
+            hasVideo: false,
+            buffering: false,
+            ready: false,
+            active: false
+          });
+        }
+
         // Fallback default demo color noise
         const canvas = document.createElement('canvas');
         canvas.width = 128;

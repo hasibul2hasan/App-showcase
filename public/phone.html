@@ -1347,6 +1347,7 @@
     }
 
     let isSeekingVideo = false;
+    let hasLoadedVideo = false;
     let currentVideoState = {
       currentTime: 0,
       duration: 0,
@@ -1365,6 +1366,14 @@
       if (!state) return;
       currentVideoState = { ...currentVideoState, ...state };
 
+      if (state.hasVideo === true || state.ready || (state.duration && state.duration > 0)) {
+        hasLoadedVideo = true;
+      } else if (state.hasVideo === false) {
+        hasLoadedVideo = false;
+        if (videoLoadingIndicator) videoLoadingIndicator.style.display = 'none';
+        if (videoPlayerControls) videoPlayerControls.style.display = 'none';
+      }
+
       if (state.error) {
         setVideoError(state.message);
         return;
@@ -1372,17 +1381,19 @@
 
       if (state.ready || (state.duration && state.duration > 0)) {
         setVideoReady('✓ Video Ready on 3D Screen');
-      } else if (state.buffering) {
+      } else if (state.buffering && (hasLoadedVideo || cachedVideoDataUrl)) {
         showVideoLoading('Buffering on 3D Screen...', 95, 'Mounting texture onto 3D display...');
       }
 
       if (videoPlayerControls) {
-        if (state.active === false) {
+        if (state.active === false || (!hasLoadedVideo && !cachedVideoDataUrl)) {
           videoPlayerControls.style.display = 'none';
           return;
         }
-        if (mobileSourceSelect && mobileSourceSelect.value === 'video') {
+        if (mobileSourceSelect && mobileSourceSelect.value === 'video' && (hasLoadedVideo || cachedVideoDataUrl)) {
           videoPlayerControls.style.display = 'flex';
+        } else {
+          videoPlayerControls.style.display = 'none';
         }
       }
 
@@ -1481,6 +1492,9 @@
 
     function applySyncState(state) {
       if (!state) return;
+      if (typeof state.hasVideo === 'boolean') {
+        hasLoadedVideo = state.hasVideo;
+      }
       if (state.finish) {
         document.querySelectorAll('#mobile-finish-picker .finish-chip').forEach(chip => {
           chip.classList.toggle('active', chip.getAttribute('data-finish') === state.finish);
@@ -1494,10 +1508,17 @@
         mobileSourceSelect.value = state.screenSource;
         if (mobileImageGroup) mobileImageGroup.style.display = state.screenSource === 'image' ? 'flex' : 'none';
         if (mobileVideoGroup) mobileVideoGroup.style.display = state.screenSource === 'video' ? 'flex' : 'none';
-        if (videoPlayerControls) videoPlayerControls.style.display = state.screenSource === 'video' ? 'flex' : 'none';
 
-        if (state.screenSource === 'video' && wasNotVideo) {
-          showVideoLoading('Loading video to 3D screen...', 50, 'Buffering video on 3D display...');
+        if (state.screenSource === 'video') {
+          if (cachedVideoDataUrl || hasLoadedVideo) {
+            if (videoPlayerControls) videoPlayerControls.style.display = 'flex';
+            if (wasNotVideo) {
+              showVideoLoading('Loading video to 3D screen...', 50, 'Buffering video on 3D display...');
+            }
+          } else {
+            if (videoLoadingIndicator) videoLoadingIndicator.style.display = 'none';
+            if (videoPlayerControls) videoPlayerControls.style.display = 'none';
+          }
         }
       }
     }
@@ -1507,10 +1528,15 @@
         const val = e.target.value;
         if (mobileImageGroup) mobileImageGroup.style.display = val === 'image' ? 'flex' : 'none';
         if (mobileVideoGroup) mobileVideoGroup.style.display = val === 'video' ? 'flex' : 'none';
-        if (videoPlayerControls) videoPlayerControls.style.display = val === 'video' ? 'flex' : 'none';
 
         if (val === 'video') {
-          showVideoLoading('Reloading video to 3D screen...', 45, 'Buffering video on 3D display...');
+          if (cachedVideoDataUrl || hasLoadedVideo) {
+            showVideoLoading('Reloading video to 3D screen...', 45, 'Buffering video on 3D display...');
+            if (videoPlayerControls) videoPlayerControls.style.display = 'flex';
+          } else {
+            if (videoLoadingIndicator) videoLoadingIndicator.style.display = 'none';
+            if (videoPlayerControls) videoPlayerControls.style.display = 'none';
+          }
         }
 
         if (activeConn && activeConn.open) {
@@ -1552,6 +1578,7 @@
       mobileVideoInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (!file) return;
+        hasLoadedVideo = true;
         const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1);
         if (mobileVideoName) mobileVideoName.innerText = file.name + ' (' + fileSizeMB + ' MB)';
         if (playerVideoTitle) playerVideoTitle.innerText = file.name;
