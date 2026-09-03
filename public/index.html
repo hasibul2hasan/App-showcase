@@ -891,12 +891,17 @@
 
       // 3. Renderer
       // NOTE: logarithmicDepthBuffer is explicitly disabled to prevent AGXMetal GPU driver crashes and tab terminations on iOS WebKit
-      renderer = new THREE.WebGLRenderer({
-        antialias: true,
-        alpha: true,
-        logarithmicDepthBuffer: false,
-        powerPreference: 'high-performance'
-      });
+      try {
+        renderer = new THREE.WebGLRenderer({
+          antialias: !isMobile,
+          alpha: true,
+          logarithmicDepthBuffer: false,
+          powerPreference: isMobile ? 'low-power' : 'default'
+        });
+      } catch (error) {
+        show3DError(error);
+        return;
+      }
       renderer.setSize(width, height);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2));
       renderer.shadowMap.enabled = true;
@@ -991,6 +996,9 @@
       // Init clock screen texture as default
       setupClockCanvas();
       applyClockTexture();
+
+      // Keep a local model visible while external assets load or fail.
+      buildSmartphone();
 
       // Begin animation loops
       animate();
@@ -1224,9 +1232,20 @@
           '/models/iphone17pro.fbx',
           (fbx) => setupLoadedModel(fbx, 'FBXLoader (/models/iphone17pro.fbx)'),
           undefined,
-          (err) => console.warn('Fallback FBX load failed:', err)
+          (err) => {
+            console.warn('Fallback FBX load failed:', err);
+            console.warn('Using the built-in procedural phone model instead.');
+          }
         );
       }
+    }
+
+    function show3DError(error) {
+      console.error('3D renderer could not start:', error);
+      const message = document.createElement('div');
+      message.style.cssText = 'position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;color:#fff;background:#0c0d10;font:600 14px/1.5 sans-serif;z-index:2;';
+      message.textContent = '3D preview could not start in this browser. Enable hardware acceleration or WebGL, then reload this page.';
+      if (container) container.appendChild(message);
     }
 
     function setModelVariant(variantName) {
