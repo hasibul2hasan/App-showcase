@@ -892,12 +892,41 @@
       // 3. Renderer
       // NOTE: logarithmicDepthBuffer is explicitly disabled to prevent AGXMetal GPU driver crashes and tab terminations on iOS WebKit
       try {
-        renderer = new THREE.WebGLRenderer({
+        const rendererCanvas = document.createElement('canvas');
+        const contextAttributes = {
+          alpha: true,
+          antialias: !isMobile
+        };
+        const webgl2Context = rendererCanvas.getContext('webgl2', contextAttributes);
+        const webglContext = webgl2Context || rendererCanvas.getContext('webgl', contextAttributes) || rendererCanvas.getContext('experimental-webgl', contextAttributes);
+
+        if (!webglContext) {
+          throw new Error('No WebGL2 or WebGL context is available.');
+        }
+
+        const rendererOptions = {
           antialias: !isMobile,
           alpha: true,
           logarithmicDepthBuffer: false,
           powerPreference: isMobile ? 'low-power' : 'default'
-        });
+        };
+
+        try {
+          renderer = new THREE.WebGLRenderer({
+            ...rendererOptions,
+            canvas: rendererCanvas,
+            context: webglContext
+          });
+        } catch (webgl2Error) {
+          const fallbackCanvas = document.createElement('canvas');
+          const fallbackContext = fallbackCanvas.getContext('webgl', contextAttributes);
+          if (!fallbackContext) throw webgl2Error;
+          renderer = new THREE.WebGLRenderer({
+            ...rendererOptions,
+            canvas: fallbackCanvas,
+            context: fallbackContext
+          });
+        }
       } catch (error) {
         show3DError(error);
         return;
