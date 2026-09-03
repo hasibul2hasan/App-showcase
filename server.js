@@ -4,7 +4,8 @@ const WebSocket = require('ws');
 const path = require('path');
 
 const app = express();
-const port = process.env.PORT || 3000;
+const requestedPort = Number(process.env.PORT) || 3000;
+let port = requestedPort;
 
 // Serve static files from the 'public' directory
 app.use(express.static(path.join(__dirname, 'public')));
@@ -176,8 +177,8 @@ wss.on('connection', (ws) => {
   });
 });
 
-// Start the server
-server.listen(port, () => {
+function startServer() {
+  server.listen(port, () => {
   const networkInterfaces = os.networkInterfaces();
   let localIp = 'localhost';
   for (const name of Object.keys(networkInterfaces)) {
@@ -198,4 +199,28 @@ server.listen(port, () => {
     console.log(`  - Network: http://${localIp}:${port}`);
   }
   console.log(`=================================================`);
-});
+  });
+}
+
+function handleStartupError(error) {
+  if (error.code !== 'EADDRINUSE') {
+    console.error('Unable to start server:', error.message);
+    process.exitCode = 1;
+    return;
+  }
+
+  if (process.env.PORT) {
+    console.error(`Port ${port} is already in use. Set PORT to an available port and try again.`);
+    process.exitCode = 1;
+    return;
+  }
+
+  const unavailablePort = port;
+  port += 1;
+  console.warn(`Port ${unavailablePort} is already in use; trying port ${port}.`);
+  server.close(() => startServer());
+}
+
+server.on('error', handleStartupError);
+wss.on('error', handleStartupError);
+startServer();
