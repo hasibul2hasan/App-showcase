@@ -205,6 +205,27 @@
   </div>
 
   <script>
+    // Polyfill roundRect for broader iOS WebKit compatibility
+    if (typeof CanvasRenderingContext2D !== 'undefined' && !CanvasRenderingContext2D.prototype.roundRect) {
+      CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, radii) {
+        let r = 0;
+        if (typeof radii === 'number') {
+          r = radii;
+        } else if (Array.isArray(radii) && radii.length > 0) {
+          r = radii[0];
+        }
+        r = Math.min(r, w / 2, h / 2);
+        this.beginPath();
+        this.moveTo(x + r, y);
+        this.arcTo(x + w, y, x + w, y + h, r);
+        this.arcTo(x + w, y + h, x, y + h, r);
+        this.arcTo(x, y + h, x, y, r);
+        this.arcTo(x, y, x + w, y, r);
+        this.closePath();
+        return this;
+      };
+    }
+
     // ----------------------------------------------------
     // Configuration & State
     // ----------------------------------------------------
@@ -864,15 +885,36 @@
       camera = new THREE.PerspectiveCamera(45, width / height, 1.0, 50.0);
       camera.position.set(0, 0, 11);
 
-      // 3. Renderer with Logarithmic Depth Buffer (Eliminates Z-fighting artifacts)
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, logarithmicDepthBuffer: true });
+      // Mobile & iOS detection for hardware-tuned rendering parameters
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      const isMobile = isIOS || /Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || (window.innerWidth < 768);
+
+      // 3. Renderer
+      // NOTE: logarithmicDepthBuffer is explicitly disabled to prevent AGXMetal GPU driver crashes and tab terminations on iOS WebKit
+      renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        alpha: true,
+        logarithmicDepthBuffer: false,
+        powerPreference: 'high-performance'
+      });
       renderer.setSize(width, height);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2));
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
       renderer.toneMappingExposure = 1.0;
       container.appendChild(renderer.domElement);
+
+      // Gracefully handle WebGL context loss and restoration on mobile
+      renderer.domElement.addEventListener('webglcontextlost', (event) => {
+        event.preventDefault();
+        console.warn('WebGL context lost. Suppressing crash...');
+      }, false);
+
+      renderer.domElement.addEventListener('webglcontextrestored', () => {
+        console.log('WebGL context restored. Rebuilding scene...');
+        init3D();
+      }, false);
 
       // 4. Orbit Controls
       controls = new THREE.OrbitControls(camera, renderer.domElement);
@@ -907,8 +949,9 @@
       const keyLight = new THREE.DirectionalLight(0xffffff, 1.8);
       keyLight.position.set(6, 10, 8);
       keyLight.castShadow = true;
-      keyLight.shadow.mapSize.width = 2048;
-      keyLight.shadow.mapSize.height = 2048;
+      const shadowRes = isMobile ? 1024 : 2048;
+      keyLight.shadow.mapSize.width = shadowRes;
+      keyLight.shadow.mapSize.height = shadowRes;
       keyLight.shadow.camera.near = 0.5;
       keyLight.shadow.camera.far = 25;
       keyLight.shadow.camera.left = -5;
@@ -1819,12 +1862,17 @@
       renderClockCanvas();
     }
 
-    function renderClockCanvas() {
+    let lastClockCanvasUpdate = 0;
+    function renderClockCanvas(force = false) {
       if (currentScreenType !== 'clock' || !canvasCtx || !clockCanvasTexture) return;
+
+      const timeNow = Date.now();
+      // Throttle texture uploads to ~20 fps (every 50ms) to prevent mobile WebKit / iOS GPU process memory exhaustion
+      if (!force && timeNow - lastClockCanvasUpdate < 50) return;
+      lastClockCanvasUpdate = timeNow;
 
       const w = canvasElement.width;
       const h = canvasElement.height;
-      const timeNow = Date.now();
       const t = timeNow / 1000;
 
       // ========================================================
@@ -2197,12 +2245,17 @@
       }
     }
 
-    function renderCameraCanvas() {
+    let lastCameraCanvasUpdate = 0;
+    function renderCameraCanvas(force = false) {
       if (currentScreenType !== 'camera' || !canvasCtx || !clockCanvasTexture) return;
+
+      const timeNow = Date.now();
+      // Throttle camera canvas updates to ~30 fps
+      if (!force && timeNow - lastCameraCanvasUpdate < 33) return;
+      lastCameraCanvasUpdate = timeNow;
 
       const w = canvasElement.width;
       const h = canvasElement.height;
-      const timeNow = Date.now();
       const t = timeNow / 1000;
 
       // ========================================================
