@@ -1,4 +1,4 @@
-# OMGMimiq
+# OMGMIMIQ
 
 <div align="center">
 
