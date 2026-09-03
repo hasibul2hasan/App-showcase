@@ -1,94 +1,206 @@
-# OMGMimiq - Motion-Synced 3D Mobile Mockup Web Application
-**OMGMimiq** is a real-time, motion-synced 3D smartphone mockup web application. This project uses a physical mobile device's gyroscope (`DeviceOrientation` API) to rotate a high-fidelity 3D phone rendered in a desktop browser in real-time. Communication between the mobile controller and the desktop viewport is managed via **WebRTC Peer-to-Peer (PeerJS)** with room-based pairing.
----
-## ⚡ 100% Serverless & Netlify Ready
+# OMGMimiq
 
-1. **Signaling & P2P Broker (PeerJS):** Cloud signaling connects desktop and phone clients via WebRTC data channels. Once paired, all sensor telemetry flows directly peer-to-peer between devices with ultra-low latency.
-2. **Mobile Controller (`public/phone.html`):** A lightweight client running on a phone. It requests motion sensor permissions (for iOS 13+) and streams orientation angles (`alpha`, `beta`, `gamma`) at 60 FPS over WebRTC.
-3. **Desktop Viewer (`public/index.html`):** The primary view rendering a procedural 3D smartphone model with studio lighting. It interpolates (`slerp`) rotation values to remove sensor jitter.
+### Motion-synced 3D phone staging, controlled from your pocket.
+<p>
+	<a href="https://omgmimiq.netlify.app/"><img src="https://img.shields.io/badge/Live%20Demo-omgmimiq.netlify.app-0284c7?style=for-the-badge&logo=netlify&logoColor=white" alt="Open the live demo"></a>
+	<a href="https://github.com/hasibul2hasan/omgmimiq"><img src="https://img.shields.io/github/stars/hasibul2hasan/omgmimiq?style=for-the-badge&logo=github&color=111827" alt="GitHub stars"></a>
+<img src="https://readme-typing-svg.demolab.com?font=Space+Mono&size=16&duration=2800&pause=900&color=0284C7&center=true&vCenter=true&width=520&lines=Pair+your+phone.;Tilt+to+move+the+model.;Stage+the+screen.;Make+the+mockup+feel+alive." alt="Animated OMGMimiq feature summary">
 
-## Deploying to Netlify
+</div>
+> **Try it now:** [Open the published Netlify app](https://omgmimiq.netlify.app/), scan the pairing QR code with a phone, approve the connection, and enable motion tracking.
 
-1. Push this repository to GitHub.
-2. In Netlify, import the repository.
-4. Click **Deploy Site**.
-Navigate to the project root and install the dependencies:
+## ✦ What It Does
+OMGMimiq turns a desktop browser into a live 3D smartphone studio. A physical phone supplies orientation data through the browser's `DeviceOrientation` API, while PeerJS/WebRTC carries motion and media data between the two devices.
+
+```mermaid
+flowchart LR
+	A[📱 Mobile controller] -->|Pairing request| C{Desktop approval}
+	C -->|Approved| B[🖥️ 3D host]
+	A -->|Orientation + media| B
+	B --> D[✨ Live staged mockup]
+```
+## ✨ Highlights
+
+| | Capability | What you can do |
+|---|---|---|
+| 🧭 | **Motion control** | Tilt a phone to rotate the desktop 3D model in real time. |
+| 🔗 | **Quick pairing** | Connect with a four-character room code or QR code. |
+| 🛡️ | **Host approval** | Accept or decline every mobile controller connection. |
+| 🖼️ | **Screen sources** | Use the dynamic clock, a custom screenshot, or a demo video. |
+| 📡 | **Live media** | Share the phone screen or camera, with front/rear switching. |
+| 🎛️ | **Fine tuning** | Adjust sensitivity, damping, axis inversion, and calibration. |
+| 🎨 | **Studio styling** | Change titanium finishes, themes, and background presets. |
+| ▶️ | **Video controls** | Play, pause, seek, mute, rewind, forward, and restart. |
+## 🚀 Published App
+
+| Experience | URL |
+|---|---|
+| 🖥️ Desktop host | [omgmimiq.netlify.app](https://omgmimiq.netlify.app/) |
+| 📱 Mobile controller | [omgmimiq.netlify.app/phone](https://omgmimiq.netlify.app/phone) |
+The controller also supports room codes in these formats:
+
+`/phone/:code` · `/pair/:code` · `/remote/:code` · `/join/:code` · `/phone?room=:code`
+## 📲 Pair a Device
+
+1. Open the [desktop host](https://omgmimiq.netlify.app/) on your computer.
+2. Scan the displayed QR code, or open the mobile controller on your phone.
+3. Enter the four-character code if it was not included in the URL.
+4. Tap **Pair**, then approve the request on the desktop.
+5. Tap **Enable Motion** and tilt the phone.
+
+> **iPhone and iPad:** motion and camera APIs generally require HTTPS. Use the Netlify deployment when testing on iOS and allow the requested browser permissions.
+## 🧰 Run Locally
+
 ```bash
 npm install
 ```
 
-### 3. Run Locally
-Start the local static server:
+For a regular start without file watching:
+```bash
+npm start
+```
+For phone testing over local Wi-Fi, open the host using your computer's network IP and use its generated QR code. iOS may require an HTTPS tunnel such as ngrok or localtunnel.
+
+<details>
+<summary>🔒 HTTPS tunnel example</summary>
+
+```bash
+npm start
+```
+
+Open the generated HTTPS address on the desktop, then scan its pairing QR code with the phone.
+</details>
+## 🗂️ Project Map
+
+```text
+.
+├── public/
+│   ├── index.html    # Desktop 3D host and staging controls
+│   ├── phone.html    # Mobile pairing and controller interface
+│   ├── style.css     # Shared host and controller styles
+│   ├── images/       # Image assets
+│   └── models/       # 3D model assets
+├── server.js         # Local Express server and WebSocket support
+├── netlify.toml      # Static publish settings and controller redirects
+└── package.json      # Scripts and dependencies
+```
+## ⚙️ How Deployment Works
+
+Netlify publishes `public/` as a static site. The redirects in `netlify.toml` map `/phone`, `/pair`, `/remote`, and `/join` to the mobile controller page.
+
+The local `server.js` provides static hosting, local network configuration, and WebSocket support for development. The deployed frontend uses PeerJS's cloud signaling service for browser-to-browser WebRTC pairing.
+## 🧪 Built With
+
+<p>
+	<img src="https://img.shields.io/badge/HTML5-E34F26?style=flat-square&logo=html5&logoColor=white" alt="HTML5">
+	<img src="https://img.shields.io/badge/CSS3-1572B6?style=flat-square&logo=css3&logoColor=white" alt="CSS3">
+	<img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=flat-square&logo=javascript&logoColor=111827" alt="JavaScript">
+	<img src="https://img.shields.io/badge/Three.js-000000?style=flat-square&logo=threedotjs&logoColor=white" alt="Three.js">
+	<img src="https://img.shields.io/badge/WebRTC-333333?style=flat-square&logo=webrtc&logoColor=white" alt="WebRTC">
+	<img src="https://img.shields.io/badge/Express-000000?style=flat-square&logo=express&logoColor=white" alt="Express">
+	<img src="https://img.shields.io/badge/Netlify-00C7B7?style=flat-square&logo=netlify&logoColor=white" alt="Netlify">
+</p>
+# OMGMimiq
+
+OMGMimiq is an interactive 3D smartphone mockup controlled by a physical mobile device. Open the host view on a desktop, pair a phone with the displayed four-character code, and tilt the phone to control the 3D model in real time.
+
+## Published App
+
+The current Netlify deployment is available at:
+
+**https://omgmimiq.netlify.app**
+
+Host view: `https://omgmimiq.netlify.app/`
+
+Mobile controller: `https://omgmimiq.netlify.app/phone`
+
+## Features
+
+- Real-time phone orientation control using the browser `DeviceOrientation` API.
+- Peer-to-peer communication through PeerJS/WebRTC, with no application database or login.
+- Host approval flow before a mobile controller can send data.
+- QR code and four-character room code pairing.
+- Dynamic clock screen for the 3D phone.
+- Custom screenshot and demo video textures.
+- Mobile screen sharing and camera sharing, including front/rear camera switching.
+- Video playback controls for play, pause, seeking, mute, rewind, forward, and restart.
+- Motion sensitivity, damping, axis inversion, and recalibration controls.
+- Titanium finish options and studio background presets.
+- Desktop orbit controls and camera reset.
+
+## How Pairing Works
+
+1. Open the host view on a desktop: `https://omgmimiq.netlify.app/`.
+2. Note the four-character pairing code and scan the QR code, or open the mobile controller URL on your phone.
+3. Enter the code on the phone if it was not included in the URL.
+4. Select **Pair** and approve the connection from the desktop host.
+5. Enable motion tracking on the phone and tilt the device.
+
+The controller also accepts these URL formats:
+
+- `/phone/:code`
+- `/pair/:code`
+- `/remote/:code`
+- `/join/:code`
+- `/phone?room=:code`
+
+## Browser Requirements
+
+Motion sensors require a secure context in many browsers, especially iOS Safari. Use the HTTPS Netlify deployment when testing on an iPhone or iPad. The browser may also ask for motion and camera permissions before those features can be used.
+
+## Run Locally
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Start the development server with automatic restart:
+
 ```bash
 npm run dev
 ```
-Or start the server directly:
+
+Or start it directly:
+
 ```bash
 npm start
-The server will bind to port `3000` on all network interfaces (`0.0.0.0`), printing:
+```
+
+The server runs on `http://localhost:3000` by default. If that port is occupied, it automatically tries the next available port. Set `PORT` to choose a specific port:
+
+```bash
+PORT=4000 npm start
+```
+
+For local phone testing, open the host on the computer's local network address, then use the generated QR code or open `/phone.html?room=XXXX` from a phone on the same Wi-Fi network. iOS sensor access may require an HTTPS tunnel such as ngrok or localtunnel.
+
+## Project Structure
+
 ```text
-=================================================
-  OMGMimiq Server running on:
-  - Local:   http://localhost:3000
-=================================================
+.
+├── public/
+│   ├── index.html    # Desktop 3D host and staging controls
+│   ├── phone.html    # Mobile pairing and controller interface
+│   ├── style.css     # Shared host and controller styles
+│   ├── images/       # Image assets
+│   └── models/       # 3D model assets
+├── server.js         # Local Express server and WebSocket support
+├── netlify.toml      # Netlify publish directory and controller redirects
+└── package.json      # Scripts and dependencies
+```
 
----
+## Deployment
 
-## Pairing Your Mobile Device
+Netlify publishes the `public` directory as a static site. The redirects in `netlify.toml` keep the controller routes available at `/phone`, `/pair`, `/remote`, and `/join`.
 
-### Method A: Local Wi-Fi (Android & Desktop)
-If your phone and computer are connected to the **same Wi-Fi network**:
-1. Open `http://localhost:3000` in your desktop browser.
-2. Note the generated 4-digit pairing code (e.g., `5123`).
-3. Find your computer's local IP address (e.g. `192.168.1.50`).
-4. On your mobile phone, navigate to `http://<your-local-ip>:3000/phone.html?room=5123` (or scan the QR code displayed on the desktop viewer).
-5. Click **Enable Motion** to pair and start streaming!
+The local `server.js` provides static hosting, local network configuration, and WebSocket support for local development. The deployed frontend uses PeerJS's cloud signaling service for browser-to-browser WebRTC pairing.
 
----
+## Technology
 
-### Method B: HTTPS Tunneling (Required for iOS Safari)
-> [!IMPORTANT]
-> Modern mobile web browsers (especially Safari on iOS 13+) require an **HTTPS secure connection** to access the `DeviceOrientationEvent` API. If you run over simple HTTP (`http://<local-ip>:3000`), the sensors will refuse to activate.
-
-To test on iOS, you can expose your local server through an HTTPS tunnel using **ngrok** or **localtunnel**.
-
-#### Using ngrok:
-1. Install ngrok globally (or download it from [ngrok.com](https://ngrok.com)):
-   ```bash
-   npm install -g ngrok
-   ```
-2. Start your local Node.js server (`npm run dev`).
-3. Start the ngrok tunnel on port 3000:
-   ```bash
-   ngrok http 3000
-   ```
-4. Copy the secure HTTPS URL generated by ngrok (e.g., `https://xxxx-xx-xx-xx.ngrok-free.app`).
-5. Open that HTTPS URL on your desktop.
-6. Scan the QR code with your iOS device to open the secure pairing link.
-7. Click **Enable Motion**, grant the iOS motion permission popup, and start tilting your device!
-
-#### Using localtunnel (Free Alternative):
-1. Expose port 3000 immediately:
-   ```bash
-   npx localtunnel --port 3000
-   ```
-2. Copy the generated `https://...` URL and follow the same steps.
-
----
-
-## Desktop Staging Controls
-
-The desktop viewer features a glassmorphic sidebar containing advanced customization options:
-- **Screen Presentation Source:**
-  - *Dynamic Home Screen:* A clock displaying real-time hours, minutes, seconds, date, battery status, and clickable apps.
-  - *Custom Screenshot:* Upload a `.png` or `.jpg` app screenshot to render directly onto the mockup screen.
-  - *Demo Video:* Upload a video loop (e.g., `.mp4` showcase) to animate the smartphone screen.
-- **Motion Sync Settings:**
-  - *Sensitivity:* Adjust how aggressively the 3D model responds to physical tilt.
-  - *Damping:* Control the smoothing factor. Lower values reduce jitter but add weight/lag; higher values react quicker.
-  - *Invert Axis Toggles:* Independently invert Pitch, Roll, or Yaw rotations if your device uses non-standard orientations.
-  - *Reset Offset:* Resets the device's neutral calibration orientation to the current physical position.
-- **Staging Environment:**
-  - Toggle between studio presets (Slate, Cyberpunk Neon, Minimal Light, OLED Pure Black) and dark/light modes.
-- **Camera Override:**
-  - Drag anywhere on the 3D viewport to override orientation angles via OrbitControls. Use the camera reset button at the top-right to snap back to the front view.
+- HTML, CSS, and browser JavaScript
+- Three.js for the 3D smartphone scene and controls
+- PeerJS/WebRTC for pairing and real-time data and media transfer
+- Express and `ws` for the local development server
+- Netlify for static hosting
