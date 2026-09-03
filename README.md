@@ -1,206 +1,184 @@
 # OMGMimiq
 
-### Motion-synced 3D phone staging, controlled from your pocket.
-<p>
-	<a href="https://omgmimiq.netlify.app/"><img src="https://img.shields.io/badge/Live%20Demo-omgmimiq.netlify.app-0284c7?style=for-the-badge&logo=netlify&logoColor=white" alt="Open the live demo"></a>
-	<a href="https://github.com/hasibul2hasan/omgmimiq"><img src="https://img.shields.io/github/stars/hasibul2hasan/omgmimiq?style=for-the-badge&logo=github&color=111827" alt="GitHub stars"></a>
-<img src="https://readme-typing-svg.demolab.com?font=Space+Mono&size=16&duration=2800&pause=900&color=0284C7&center=true&vCenter=true&width=520&lines=Pair+your+phone.;Tilt+to+move+the+model.;Stage+the+screen.;Make+the+mockup+feel+alive." alt="Animated OMGMimiq feature summary">
+<div align="center">
+
+### Motion-synced 3D smartphone staging, controlled directly from your pocket.
+
+<p align="center">
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=16&duration=2600&pause=1000&color=0284C7&center=true&vCenter=true&width=560&lines=Tilt+your+phone+to+rotate+the+3D+model+in+real+time.;Stream+live+screen+and+camera+feeds+instantly.;Zero-setup+pairing+with+QR+codes+and+WebRTC.;Studio-grade+titanium+finishes+and+lighting." alt="Animated Feature Summary" />
+</p>
+
+[![Live Demo](https://img.shields.io/badge/Live_Demo-omgmimiq.netlify.app-0284c7?style=flat-square&logo=netlify&logoColor=white)](https://omgmimiq.netlify.app/)
+[![GitHub Stars](https://img.shields.io/github/stars/hasibul2hasan/omgmimiq?style=flat-square&logo=github&color=0f172a)](https://github.com/hasibul2hasan/omgmimiq)
+[![License: MIT](https://img.shields.io/badge/License-MIT-emerald.svg?style=flat-square)](LICENSE)
+[![Three.js](https://img.shields.io/badge/Three.js-r128-black?style=flat-square&logo=three.js&logoColor=white)](https://threejs.org/)
+[![WebRTC](https://img.shields.io/badge/WebRTC-PeerJS_1.5.4-333333?style=flat-square&logo=webrtc&logoColor=white)](https://peerjs.com/)
+[![Node.js](https://img.shields.io/badge/Node.js-Express_4-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org/)
+[![WebSocket](https://img.shields.io/badge/WebSocket-ws-blueviolet?style=flat-square)](https://github.com/websockets/ws)
+[![Deploy](https://img.shields.io/badge/Deploy-Netlify-00C7B7?style=flat-square&logo=netlify&logoColor=white)](https://omgmimiq.netlify.app/)
 
 </div>
-> **Try it now:** [Open the published Netlify app](https://omgmimiq.netlify.app/), scan the pairing QR code with a phone, approve the connection, and enable motion tracking.
 
-## ✦ What It Does
-OMGMimiq turns a desktop browser into a live 3D smartphone studio. A physical phone supplies orientation data through the browser's `DeviceOrientation` API, while PeerJS/WebRTC carries motion and media data between the two devices.
+---
 
-```mermaid
-flowchart LR
-	A[📱 Mobile controller] -->|Pairing request| C{Desktop approval}
-	C -->|Approved| B[🖥️ 3D host]
-	A -->|Orientation + media| B
-	B --> D[✨ Live staged mockup]
-```
-## ✨ Highlights
+## ✨ Features
 
-| | Capability | What you can do |
-|---|---|---|
-| 🧭 | **Motion control** | Tilt a phone to rotate the desktop 3D model in real time. |
-| 🔗 | **Quick pairing** | Connect with a four-character room code or QR code. |
-| 🛡️ | **Host approval** | Accept or decline every mobile controller connection. |
-| 🖼️ | **Screen sources** | Use the dynamic clock, a custom screenshot, or a demo video. |
-| 📡 | **Live media** | Share the phone screen or camera, with front/rear switching. |
-| 🎛️ | **Fine tuning** | Adjust sensitivity, damping, axis inversion, and calibration. |
-| 🎨 | **Studio styling** | Change titanium finishes, themes, and background presets. |
-| ▶️ | **Video controls** | Play, pause, seek, mute, rewind, forward, and restart. |
-## 🚀 Published App
+- 🧭 **Real-Time Motion Tracking** — Mirrors phone tilt, pitch, roll, and yaw at 60 FPS using the browser's native `DeviceOrientation` API with zero mobile app installation required.
+- ⚡ **Peer-to-Peer WebRTC Sync** — Delivers ultra-low-latency communication via **PeerJS** directly between browsers with no intermediary database storage.
+- 🔒 **Host Approval & Secure Pairing** — Generates unique four-character room codes and dynamic QR codes with a desktop authorization prompt to protect active sessions.
+- 📡 **Live Media Streaming** — Streams your mobile device's camera (with front/rear lens switching) or phone screen directly onto the 3D phone model.
+- 🖼️ **Versatile Screen Textures** — Switch dynamically between an active digital clock, custom image uploads, or looped video showcases.
+- 🎛️ **Precision Calibration Controls** — Fine-tune rotation sensitivity, apply motion damping, invert individual axes, and re-center calibration in one click.
+- 🎨 **Photorealistic Studio Mockups** — Features detailed smartphone geometry with authentic titanium finishes (Natural, Black, White, Desert) and customizable lighting rigs.
+- ▶️ **Integrated Video Playback Deck** — Complete control over video textures with play, pause, progress scrubbing, audio mute, and rewind capabilities.
 
-| Experience | URL |
-|---|---|
-| 🖥️ Desktop host | [omgmimiq.netlify.app](https://omgmimiq.netlify.app/) |
-| 📱 Mobile controller | [omgmimiq.netlify.app/phone](https://omgmimiq.netlify.app/phone) |
-The controller also supports room codes in these formats:
+---
 
-`/phone/:code` · `/pair/:code` · `/remote/:code` · `/join/:code` · `/phone?room=:code`
-## 📲 Pair a Device
+## 📸 Demo & Screenshots
 
-1. Open the [desktop host](https://omgmimiq.netlify.app/) on your computer.
-2. Scan the displayed QR code, or open the mobile controller on your phone.
-3. Enter the four-character code if it was not included in the URL.
-4. Tap **Pair**, then approve the request on the desktop.
-5. Tap **Enable Motion** and tilt the phone.
-
-> **iPhone and iPad:** motion and camera APIs generally require HTTPS. Use the Netlify deployment when testing on iOS and allow the requested browser permissions.
-## 🧰 Run Locally
-
-```bash
-npm install
-```
-
-For a regular start without file watching:
-```bash
-npm start
-```
-For phone testing over local Wi-Fi, open the host using your computer's network IP and use its generated QR code. iOS may require an HTTPS tunnel such as ngrok or localtunnel.
-
-<details>
-<summary>🔒 HTTPS tunnel example</summary>
-
-```bash
-npm start
-```
-
-Open the generated HTTPS address on the desktop, then scan its pairing QR code with the phone.
-</details>
-## 🗂️ Project Map
-
-```text
-.
-├── public/
-│   ├── index.html    # Desktop 3D host and staging controls
-│   ├── phone.html    # Mobile pairing and controller interface
-│   ├── style.css     # Shared host and controller styles
-│   ├── images/       # Image assets
-│   └── models/       # 3D model assets
-├── server.js         # Local Express server and WebSocket support
-├── netlify.toml      # Static publish settings and controller redirects
-└── package.json      # Scripts and dependencies
-```
-## ⚙️ How Deployment Works
-
-Netlify publishes `public/` as a static site. The redirects in `netlify.toml` map `/phone`, `/pair`, `/remote`, and `/join` to the mobile controller page.
-
-The local `server.js` provides static hosting, local network configuration, and WebSocket support for development. The deployed frontend uses PeerJS's cloud signaling service for browser-to-browser WebRTC pairing.
-## 🧪 Built With
-
-<p>
-	<img src="https://img.shields.io/badge/HTML5-E34F26?style=flat-square&logo=html5&logoColor=white" alt="HTML5">
-	<img src="https://img.shields.io/badge/CSS3-1572B6?style=flat-square&logo=css3&logoColor=white" alt="CSS3">
-	<img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=flat-square&logo=javascript&logoColor=111827" alt="JavaScript">
-	<img src="https://img.shields.io/badge/Three.js-000000?style=flat-square&logo=threedotjs&logoColor=white" alt="Three.js">
-	<img src="https://img.shields.io/badge/WebRTC-333333?style=flat-square&logo=webrtc&logoColor=white" alt="WebRTC">
-	<img src="https://img.shields.io/badge/Express-000000?style=flat-square&logo=express&logoColor=white" alt="Express">
-	<img src="https://img.shields.io/badge/Netlify-00C7B7?style=flat-square&logo=netlify&logoColor=white" alt="Netlify">
+<p align="center">
+  <img src="public/images/demo.png" alt="OMGMimiq 3D Studio Demo" width="100%" />
 </p>
-# OMGMimiq
 
-OMGMimiq is an interactive 3D smartphone mockup controlled by a physical mobile device. Open the host view on a desktop, pair a phone with the displayed four-character code, and tilt the phone to control the 3D model in real time.
+---
 
-## Published App
+## 🚀 Getting Started
 
-The current Netlify deployment is available at:
+Follow these steps to set up and run OMGMimiq locally on your machine.
 
-**https://omgmimiq.netlify.app**
+### 1. Prerequisites
 
-Host view: `https://omgmimiq.netlify.app/`
+Ensure you have the following installed:
+- **Node.js** (v16.0.0 or higher)
+- **npm** (v7.0.0 or higher)
+- A modern web browser supporting **WebGL** and **WebRTC** (Chrome, Safari, Firefox, Edge)
 
-Mobile controller: `https://omgmimiq.netlify.app/phone`
+### 2. Installation
 
-## Features
-
-- Real-time phone orientation control using the browser `DeviceOrientation` API.
-- Peer-to-peer communication through PeerJS/WebRTC, with no application database or login.
-- Host approval flow before a mobile controller can send data.
-- QR code and four-character room code pairing.
-- Dynamic clock screen for the 3D phone.
-- Custom screenshot and demo video textures.
-- Mobile screen sharing and camera sharing, including front/rear camera switching.
-- Video playback controls for play, pause, seeking, mute, rewind, forward, and restart.
-- Motion sensitivity, damping, axis inversion, and recalibration controls.
-- Titanium finish options and studio background presets.
-- Desktop orbit controls and camera reset.
-
-## How Pairing Works
-
-1. Open the host view on a desktop: `https://omgmimiq.netlify.app/`.
-2. Note the four-character pairing code and scan the QR code, or open the mobile controller URL on your phone.
-3. Enter the code on the phone if it was not included in the URL.
-4. Select **Pair** and approve the connection from the desktop host.
-5. Enable motion tracking on the phone and tilt the device.
-
-The controller also accepts these URL formats:
-
-- `/phone/:code`
-- `/pair/:code`
-- `/remote/:code`
-- `/join/:code`
-- `/phone?room=:code`
-
-## Browser Requirements
-
-Motion sensors require a secure context in many browsers, especially iOS Safari. Use the HTTPS Netlify deployment when testing on an iPhone or iPad. The browser may also ask for motion and camera permissions before those features can be used.
-
-## Run Locally
-
-Install dependencies:
+Clone the repository and install project dependencies:
 
 ```bash
+# Clone the repository
+git clone https://github.com/hasibul2hasan/omgmimiq.git
+
+# Navigate into the project root
+cd omgmimiq
+
+# Install dependencies
 npm install
 ```
 
-Start the development server with automatic restart:
+### 3. Local Deployment
+
+Start the development server:
 
 ```bash
+# Run with live reload via nodemon
 npm run dev
-```
 
-Or start it directly:
-
-```bash
+# Or run standard production start
 npm start
 ```
 
-The server runs on `http://localhost:3000` by default. If that port is occupied, it automatically tries the next available port. Set `PORT` to choose a specific port:
-
-```bash
-PORT=4000 npm start
-```
-
-For local phone testing, open the host on the computer's local network address, then use the generated QR code or open `/phone.html?room=XXXX` from a phone on the same Wi-Fi network. iOS sensor access may require an HTTPS tunnel such as ngrok or localtunnel.
-
-## Project Structure
+By default, the server runs on `http://localhost:3000`. If port 3000 is occupied, it automatically increments to the next free port.
 
 ```text
-.
-├── public/
-│   ├── index.html    # Desktop 3D host and staging controls
-│   ├── phone.html    # Mobile pairing and controller interface
-│   ├── style.css     # Shared host and controller styles
-│   ├── images/       # Image assets
-│   └── models/       # 3D model assets
-├── server.js         # Local Express server and WebSocket support
-├── netlify.toml      # Netlify publish directory and controller redirects
-└── package.json      # Scripts and dependencies
+=================================================
+  OMGMimiq Server running on:
+  - Local:   http://localhost:3000
+  - Network: http://192.168.1.100:3000
+=================================================
 ```
 
-## Deployment
+> 📱 **Testing on Mobile (iOS / Android):**
+> - Connect your smartphone to the same Wi-Fi network as your computer.
+> - Open `http://<YOUR_LOCAL_IP>:3000` on your desktop and scan the QR code with your phone.
+> - **iOS Safari Note:** iOS strictly requires HTTPS to grant access to the `DeviceOrientation` and camera APIs. When developing locally for iOS, use an HTTPS tunnel such as [ngrok](https://ngrok.com/) (`npx ngrok http 3000`) or test directly via the [Netlify Deployment](https://omgmimiq.netlify.app/).
 
-Netlify publishes the `public` directory as a static site. The redirects in `netlify.toml` keep the controller routes available at `/phone`, `/pair`, `/remote`, and `/join`.
+---
 
-The local `server.js` provides static hosting, local network configuration, and WebSocket support for local development. The deployed frontend uses PeerJS's cloud signaling service for browser-to-browser WebRTC pairing.
+## 💡 Usage
 
-## Technology
+### Pairing Devices
 
-- HTML, CSS, and browser JavaScript
-- Three.js for the 3D smartphone scene and controls
-- PeerJS/WebRTC for pairing and real-time data and media transfer
-- Express and `ws` for the local development server
-- Netlify for static hosting
+1. **Launch Host View:** Open the desktop host at `http://localhost:3000` (or the deployed Netlify URL).
+2. **Scan or Enter Code:** Scan the on-screen QR code with your mobile camera, or navigate to `/phone` and enter the 4-character room code.
+3. **Approve Request:** Click **Approve** on the desktop notification banner to accept the incoming controller connection.
+4. **Enable Sensors:** Tap **Enable Motion** on your mobile controller, calibrate the angle, and tilt your device to manipulate the 3D phone model.
+
+### Clean Pairing Route Aliases
+
+OMGMimiq supports convenient clean URLs for direct mobile pairing:
+
+```http
+GET /phone/:code
+GET /pair/:code
+GET /remote/:code
+GET /join/:code
+GET /phone?room=:code
+```
+
+### WebSocket Motion Protocol
+
+When using the built-in local WebSocket relay, orientation payloads follow this schema:
+
+```json
+{
+  "type": "orientation",
+  "alpha": 182.45,
+  "beta": 14.20,
+  "gamma": -3.85
+}
+```
+
+---
+
+## ⚙️ Configuration
+
+### Environment Variables
+
+Configure the server runtime by setting the following environment variables:
+
+| Variable | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `PORT` | `Number` | `3000` | Target port number for the Express HTTP and WebSocket server. |
+| `NODE_ENV` | `String` | `development` | Server runtime environment (`development` or `production`). |
+
+### Route & Architecture Map
+
+| Route / Path | Target File | Description |
+| :--- | :--- | :--- |
+| `/` | `public/index.html` | Desktop 3D staging studio and Three.js canvas viewport. |
+| `/phone` | `public/phone.html` | Mobile sensor interface, camera streamer, and control pad. |
+| `/api/config` | `server.js` | Returns local network IP and active listening port as JSON. |
+| `/models/*` | `public/models/` | 3D geometry assets (`.glb`, `.fbx`, `.gltf`). |
+| `netlify.toml` | — | Netlify deployment redirects and single-page routing rules. |
+
+---
+
+## 🤝 Contributing
+
+Contributions make the open-source community an incredible place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+
+1. **Fork** the project repository.
+2. **Create** your feature branch:
+   ```bash
+   git checkout -b feature/AmazingFeature
+   ```
+3. **Commit** your changes with clear messages:
+   ```bash
+   git commit -m "Add AmazingFeature"
+   ```
+4. **Push** to the branch:
+   ```bash
+   git push origin feature/AmazingFeature
+   ```
+5. **Open** a Pull Request for review.
+
+Found a bug or have a suggestion? Feel free to open an issue in the [GitHub Issues](https://github.com/hasibul2hasan/omgmimiq/issues) tracker.
+
+---
+
+## 📄 License
+
+Distributed under the **MIT License**. See the `LICENSE` file for more details.
