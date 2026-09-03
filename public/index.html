@@ -375,7 +375,7 @@
           applyImageTexture();
         } else if (e.target.value === 'video') {
           if (videoUploadGroup) videoUploadGroup.style.display = 'flex';
-          applyVideoTexture();
+          applyVideoTexture(lastVideoFileOrUrl);
         } else if (e.target.value === 'mirror') {
           applyMirrorTexture();
         } else if (e.target.value === 'window') {
@@ -625,7 +625,7 @@
               if (src === 'image') {
                 applyImageTexture(payload.dataUrl);
               } else if (src === 'video') {
-                applyVideoTexture(payload.dataUrl);
+                applyVideoTexture(payload.dataUrl || lastVideoFileOrUrl);
               } else if (src === 'mirror') {
                 applyMirrorTexture();
               } else {
@@ -2773,21 +2773,55 @@
       }
     }
 
+    let lastVideoFileOrUrl = null;
+
     // 3. Custom video screen source loading
     function applyVideoTexture(fileOrUrl) {
       currentScreenType = 'video';
       cleanupVideo();
 
       if (fileOrUrl) {
+        lastVideoFileOrUrl = fileOrUrl;
+      }
+      const targetSource = fileOrUrl || lastVideoFileOrUrl;
+
+      if (targetSource) {
+        // Send immediate buffering status to paired phone
+        if (activeConn && activeConn.open) {
+          activeConn.send({
+            type: 'video_status',
+            buffering: true,
+            ready: false,
+            active: true
+          });
+        }
+
+        // Display loading screen on 3D model while video buffers
+        const loadCanvas = document.createElement('canvas');
+        loadCanvas.width = 512;
+        loadCanvas.height = 1120;
+        const lctx = loadCanvas.getContext('2d');
+        lctx.fillStyle = '#090d16';
+        lctx.fillRect(0, 0, 512, 1120);
+        lctx.fillStyle = '#38bdf8';
+        lctx.font = '700 24px -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif';
+        lctx.textAlign = 'center';
+        lctx.fillText('LOADING VIDEO...', 256, 540);
+        lctx.fillStyle = '#94a3b8';
+        lctx.font = '500 14px -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif';
+        lctx.fillText('Preparing 3D Screen Texture', 256, 575);
+        const loadTex = new THREE.CanvasTexture(loadCanvas);
+        updateAllScreenMeshes(loadTex);
+
         activeVideoElement = document.createElement('video');
         activeVideoElement.autoplay = true;
         activeVideoElement.loop = true;
         activeVideoElement.muted = true;
         activeVideoElement.playsInline = true;
-        if (typeof fileOrUrl === 'string') {
-          activeVideoElement.src = fileOrUrl;
+        if (typeof targetSource === 'string') {
+          activeVideoElement.src = targetSource;
         } else {
-          activeVideoElement.src = URL.createObjectURL(fileOrUrl);
+          activeVideoElement.src = URL.createObjectURL(targetSource);
         }
 
         activeVideoElement.addEventListener('timeupdate', sendVideoStatusToPeer);
@@ -2805,7 +2839,29 @@
           videoTex.magFilter = THREE.LinearFilter;
           videoTex.format = THREE.RGBAFormat;
           updateAllScreenMeshes(videoTex);
-          sendVideoStatusToPeer();
+          if (activeConn && activeConn.open) {
+            activeConn.send({
+              type: 'video_status',
+              ready: true,
+              buffering: false,
+              active: true,
+              currentTime: activeVideoElement.currentTime,
+              duration: activeVideoElement.duration || 0,
+              paused: activeVideoElement.paused,
+              muted: activeVideoElement.muted
+            });
+          }
+        };
+
+        activeVideoElement.onerror = (err) => {
+          console.error('Error loading video on 3D screen:', err);
+          if (activeConn && activeConn.open) {
+            activeConn.send({
+              type: 'video_status',
+              error: true,
+              message: 'Failed to decode or play video on 3D screen'
+            });
+          }
         };
       } else {
         // Fallback default demo color noise

@@ -1465,3 +1465,12 @@ body.is-paired .mobile-card {
 [data-theme="light"] .video-seek-range {
   background: #e2e8f0;
 }
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.rotating-spinner {
+  animation: spin 0.9s linear infinite;
+}

@@ -272,6 +272,24 @@
             </div>
             <span class="subtitle" id="mobile-video-name" style="text-align: center; justify-content: center;">No video chosen</span>
 
+            <!-- Video Loading & Transfer Progress Indicator -->
+            <div id="video-loading-indicator" style="display: none; flex-direction: column; gap: 8px; width: 100%; margin-top: 8px; padding: 12px; background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 0;">
+              <div style="display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <svg id="video-loading-spinner" class="ui-icon-xs rotating-spinner" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.5">
+                    <circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="12"></circle>
+                  </svg>
+                  <span id="video-loading-status" style="font-size: 0.8rem; font-weight: 700; color: #38bdf8;">Loading video to 3D screen...</span>
+                </div>
+                <span id="video-loading-percent" style="font-size: 0.76rem; font-family: monospace; font-weight: 700; color: #38bdf8;">0%</span>
+              </div>
+              <!-- Progress Bar -->
+              <div style="width: 100%; height: 4px; background: rgba(255, 255, 255, 0.1); overflow: hidden;">
+                <div id="video-loading-bar" style="width: 0%; height: 100%; background: #38bdf8; transition: width 0.2s ease;"></div>
+              </div>
+              <span id="video-loading-hint" style="font-size: 0.7rem; color: var(--text-secondary); text-align: center;">Reading file and streaming texture to 3D model...</span>
+            </div>
+
             <!-- Video Playback Controls (Active when Custom Video is selected) -->
             <div id="video-player-controls" class="video-player-card" style="display: none; flex-direction: column; gap: 10px; width: 100%; margin-top: 8px; padding: 12px;">
               <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -1248,6 +1266,86 @@
     const videoMuteBtnText = document.getElementById('video-mute-btn-text');
     const videoRestartBtn = document.getElementById('video-restart-btn');
 
+    // Video Loading Indicator Elements
+    const videoLoadingIndicator = document.getElementById('video-loading-indicator');
+    const videoLoadingSpinner = document.getElementById('video-loading-spinner');
+    const videoLoadingStatus = document.getElementById('video-loading-status');
+    const videoLoadingPercent = document.getElementById('video-loading-percent');
+    const videoLoadingBar = document.getElementById('video-loading-bar');
+    const videoLoadingHint = document.getElementById('video-loading-hint');
+    let videoLoadingDismissTimeout = null;
+
+    function showVideoLoading(status, percent, hint) {
+      if (videoLoadingDismissTimeout) {
+        clearTimeout(videoLoadingDismissTimeout);
+        videoLoadingDismissTimeout = null;
+      }
+      if (videoLoadingIndicator) {
+        videoLoadingIndicator.style.display = 'flex';
+        videoLoadingIndicator.style.background = 'rgba(56, 189, 248, 0.08)';
+        videoLoadingIndicator.style.borderColor = 'rgba(56, 189, 248, 0.35)';
+      }
+      if (videoLoadingSpinner) {
+        videoLoadingSpinner.style.display = 'inline-block';
+      }
+      if (videoLoadingStatus) {
+        videoLoadingStatus.innerText = status || 'Loading video to 3D screen...';
+        videoLoadingStatus.style.color = '#38bdf8';
+      }
+      if (videoLoadingPercent && typeof percent !== 'undefined') {
+        videoLoadingPercent.innerText = Math.round(percent) + '%';
+      }
+      if (videoLoadingBar && typeof percent !== 'undefined') {
+        videoLoadingBar.style.width = Math.min(100, Math.max(0, percent)) + '%';
+        videoLoadingBar.style.background = '#38bdf8';
+      }
+      if (videoLoadingHint && hint) {
+        videoLoadingHint.innerText = hint;
+      }
+    }
+
+    function setVideoReady(successMessage) {
+      if (!videoLoadingIndicator) return;
+      if (videoLoadingSpinner) {
+        videoLoadingSpinner.style.display = 'none';
+      }
+      if (videoLoadingStatus) {
+        videoLoadingStatus.innerText = successMessage || '✓ Video Ready on 3D Screen';
+        videoLoadingStatus.style.color = '#4ade80';
+      }
+      if (videoLoadingPercent) {
+        videoLoadingPercent.innerText = '100%';
+      }
+      if (videoLoadingBar) {
+        videoLoadingBar.style.width = '100%';
+        videoLoadingBar.style.background = '#4ade80';
+      }
+      if (videoLoadingHint) {
+        videoLoadingHint.innerText = 'Playback active. Use remote controls below.';
+      }
+      if (videoLoadingDismissTimeout) clearTimeout(videoLoadingDismissTimeout);
+      videoLoadingDismissTimeout = setTimeout(() => {
+        if (videoLoadingIndicator) videoLoadingIndicator.style.display = 'none';
+        if (videoLoadingBar) videoLoadingBar.style.background = '#38bdf8';
+      }, 2500);
+    }
+
+    function setVideoError(errorMessage) {
+      if (!videoLoadingIndicator) return;
+      if (videoLoadingSpinner) videoLoadingSpinner.style.display = 'none';
+      if (videoLoadingStatus) {
+        videoLoadingStatus.innerText = '⚠️ Video Load Failed';
+        videoLoadingStatus.style.color = '#f87171';
+      }
+      if (videoLoadingHint) {
+        videoLoadingHint.innerText = errorMessage || 'Could not load video. Please try another file.';
+      }
+      if (videoLoadingDismissTimeout) clearTimeout(videoLoadingDismissTimeout);
+      videoLoadingDismissTimeout = setTimeout(() => {
+        if (videoLoadingIndicator) videoLoadingIndicator.style.display = 'none';
+      }, 4000);
+    }
+
     let isSeekingVideo = false;
     let currentVideoState = {
       currentTime: 0,
@@ -1266,6 +1364,17 @@
     function updateVideoPlayerUI(state) {
       if (!state) return;
       currentVideoState = { ...currentVideoState, ...state };
+
+      if (state.error) {
+        setVideoError(state.message);
+        return;
+      }
+
+      if (state.ready || (state.duration && state.duration > 0)) {
+        setVideoReady('✓ Video Ready on 3D Screen');
+      } else if (state.buffering) {
+        showVideoLoading('Buffering on 3D Screen...', 95, 'Mounting texture onto 3D display...');
+      }
 
       if (videoPlayerControls) {
         if (state.active === false) {
@@ -1381,10 +1490,15 @@
         mobileBgPreset.value = state.staging;
       }
       if (state.screenSource && mobileSourceSelect) {
+        const wasNotVideo = (mobileSourceSelect.value !== 'video');
         mobileSourceSelect.value = state.screenSource;
         if (mobileImageGroup) mobileImageGroup.style.display = state.screenSource === 'image' ? 'flex' : 'none';
         if (mobileVideoGroup) mobileVideoGroup.style.display = state.screenSource === 'video' ? 'flex' : 'none';
         if (videoPlayerControls) videoPlayerControls.style.display = state.screenSource === 'video' ? 'flex' : 'none';
+
+        if (state.screenSource === 'video' && wasNotVideo) {
+          showVideoLoading('Loading video to 3D screen...', 50, 'Buffering video on 3D display...');
+        }
       }
     }
 
@@ -1395,11 +1509,19 @@
         if (mobileVideoGroup) mobileVideoGroup.style.display = val === 'video' ? 'flex' : 'none';
         if (videoPlayerControls) videoPlayerControls.style.display = val === 'video' ? 'flex' : 'none';
 
+        if (val === 'video') {
+          showVideoLoading('Reloading video to 3D screen...', 45, 'Buffering video on 3D display...');
+        }
+
         if (activeConn && activeConn.open) {
           if (val === 'image' && cachedImageDataUrl) {
             activeConn.send({ type: 'set_image', dataUrl: cachedImageDataUrl });
-          } else if (val === 'video' && cachedVideoDataUrl) {
-            activeConn.send({ type: 'set_video', dataUrl: cachedVideoDataUrl });
+          } else if (val === 'video') {
+            if (cachedVideoDataUrl) {
+              activeConn.send({ type: 'set_video', dataUrl: cachedVideoDataUrl });
+            } else {
+              activeConn.send({ type: 'set_screen_source', source: 'video' });
+            }
           } else {
             activeConn.send({ type: 'set_screen_source', source: val });
           }
@@ -1430,20 +1552,36 @@
       mobileVideoInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (!file) return;
-        if (mobileVideoName) mobileVideoName.innerText = file.name;
+        const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1);
+        if (mobileVideoName) mobileVideoName.innerText = file.name + ' (' + fileSizeMB + ' MB)';
         if (playerVideoTitle) playerVideoTitle.innerText = file.name;
         if (videoPlayerControls) videoPlayerControls.style.display = 'flex';
+
+        showVideoLoading('Reading video file...', 5, 'Processing ' + file.name + ' (' + fileSizeMB + ' MB)...');
         
         const reader = new FileReader();
+        reader.onprogress = (evt) => {
+          if (evt.lengthComputable) {
+            const pct = Math.round((evt.loaded / evt.total) * 90);
+            showVideoLoading('Reading video file (' + pct + '%)...', pct, 'Reading ' + file.name + ' from mobile storage...');
+          }
+        };
+
         reader.onload = () => {
+          showVideoLoading('Transferring to 3D Screen...', 95, 'Streaming video to desktop host...');
           cachedVideoDataUrl = reader.result;
           if (mobileSourceSelect) mobileSourceSelect.value = 'video';
           if (mobileVideoGroup) mobileVideoGroup.style.display = 'flex';
           if (videoPlayerControls) videoPlayerControls.style.display = 'flex';
           if (activeConn && activeConn.open) {
-            activeConn.send({ type: 'set_video', dataUrl: cachedVideoDataUrl });
+            activeConn.send({ type: 'set_video', dataUrl: cachedVideoDataUrl, filename: file.name });
           }
         };
+
+        reader.onerror = () => {
+          setVideoError('Error reading file from mobile device.');
+        };
+
         reader.readAsDataURL(file);
       });
     }
