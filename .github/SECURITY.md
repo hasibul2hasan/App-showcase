@@ -31,3 +31,4 @@ Instead, please report it through one of the following channels:
 - **Initial Acknowledgment:** Within 48 hours of receiving the report.
 - **Triage & Assessment:** Regular updates on the status and validation of the issue.
 - **Resolution:** A patch will be prepared, tested, and deployed, followed by an acknowledgment in the release notes (unless you prefer anonymity).
+

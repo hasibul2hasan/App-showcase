@@ -11,6 +11,7 @@
 [![Live Demo](https://img.shields.io/badge/Live_Demo-omgmimiq.netlify.app-0284c7?style=flat-square&logo=netlify&logoColor=white)](https://omgmimiq.netlify.app/)
 [![GitHub Stars](https://img.shields.io/github/stars/hasibul2hasan/omgmimiq?style=flat-square&logo=github&color=0f172a)](https://github.com/hasibul2hasan/omgmimiq)
 [![License: MIT](https://img.shields.io/badge/License-MIT-emerald.svg?style=flat-square)](LICENSE)
+[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg?style=flat-square)](.github/CODE_OF_CONDUCT.md)
 [![Three.js](https://img.shields.io/badge/Three.js-r128-black?style=flat-square&logo=three.js&logoColor=white)](https://threejs.org/)
 [![WebRTC](https://img.shields.io/badge/WebRTC-PeerJS_1.5.4-333333?style=flat-square&logo=webrtc&logoColor=white)](https://peerjs.com/)
 [![Node.js](https://img.shields.io/badge/Node.js-Express_4-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org/)
@@ -154,6 +155,28 @@ Configure the server runtime by setting the following environment variables:
 | `/models/*` | `public/models/` | 3D geometry assets (`.glb`, `.fbx`, `.gltf`). |
 | `netlify.toml` | — | Netlify deployment redirects and single-page routing rules. |
 
+### Directory Structure
+
+```text
+omgmimiq/
+├── .github/               # Community health files
+│   ├── CODE_OF_CONDUCT.md # Contributor Covenant v2.1
+│   ├── CONTRIBUTING.md    # Setup & contribution guidelines
+│   └── SECURITY.md        # Vulnerability reporting policy
+├── public/
+│   ├── images/            # UI textures & preview graphics
+│   ├── models/            # 3D smartphone models (.glb, .fbx, .gltf)
+│   ├── index.html         # Desktop 3D staging studio & Three.js canvas
+│   ├── phone.html         # Mobile orientation controller & media streamer
+│   └── style.css          # Studio UI stylesheet
+├── .gitignore             # Git ignored patterns
+├── LICENSE                # MIT License
+├── netlify.toml           # Netlify routing & redirect configuration
+├── package.json           # Dependencies and run scripts
+├── README.md              # Project documentation
+└── server.js              # Express server and WebSocket signaling relay
+```
+
 ---
 
 ## 🤝 Contributing
@@ -179,6 +202,18 @@ Found a bug or have a suggestion? Feel free to open an issue in the [GitHub Issu
 
 ---
 
+## 📜 Code of Conduct
+
+This project adheres to the [Contributor Covenant (v2.1)](.github/CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior following our guidelines in [CODE_OF_CONDUCT.md](.github/CODE_OF_CONDUCT.md).
+
+---
+
+## 🛡️ Security
+
+Security vulnerabilities are taken seriously. Please do not report security issues via public GitHub issues. Refer to our [Security Policy](.github/SECURITY.md) to responsibly report vulnerabilities.
+
+---
+
 ## 📄 License
 
-Distributed under the **MIT License**. See the `LICENSE` file for more details.
+Distributed under the **MIT License**. See the [LICENSE](LICENSE) file for more details.

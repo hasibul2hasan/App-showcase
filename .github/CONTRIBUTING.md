@@ -87,3 +87,4 @@ omgmimiq/
    ```
 5. **Open a Pull Request**:
    - Fill out the PR description with details about the changes made, any screenshots/recordings of visual adjustments, and related issue numbers.
+
