@@ -158,7 +158,7 @@ Configure the server runtime by setting the following environment variables:
 
 ## 🤝 Contributing
 
-Contributions make the open-source community an incredible place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+Contributions make the open-source community an incredible place to learn, inspire, and create. Any contributions you make are **greatly appreciated**. Please see [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md) for full development setup and contribution guidelines.
 
 1. **Fork** the project repository.
 2. **Create** your feature branch:

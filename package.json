@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "OMGMimiq - Real-time motion-synced 3D mobile mockup web application",
   "main": "server.js",
+  "license": "MIT",
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js"
